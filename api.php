@@ -1,7 +1,10 @@
 <?php
 // Marvel Legendary Stats API
-// Database configuration for one.com
 
+// EDIT PASSWORD - Change this to your secret password
+$edit_password = 'CHANGE_THIS_PASSWORD';
+
+// Database configuration for one.com
 $db_host = 'globbin.se.mysql';
 $db_name = 'globbin_se';
 $db_user = 'globbin_se';
@@ -67,6 +70,18 @@ initTables($pdo);
 // Get action from request
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
+// Password check for write operations
+function checkPassword($required_password) {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $provided = $data['password'] ?? $_GET['password'] ?? '';
+    if ($provided !== $required_password) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Invalid password']);
+        exit;
+    }
+    return $data;
+}
+
 switch ($action) {
     case 'load':
         // Load all cards and games
@@ -98,7 +113,7 @@ switch ($action) {
         break;
 
     case 'saveCard':
-        $data = json_decode(file_get_contents('php://input'), true);
+        $data = checkPassword($edit_password);
 
         if (isset($data['id']) && $data['id']) {
             // Update existing card
@@ -114,7 +129,7 @@ switch ($action) {
         break;
 
     case 'saveGame':
-        $data = json_decode(file_get_contents('php://input'), true);
+        $data = checkPassword($edit_password);
 
         if (isset($data['id']) && $data['id']) {
             // Update existing game
@@ -140,14 +155,14 @@ switch ($action) {
         break;
 
     case 'deleteCard':
-        $data = json_decode(file_get_contents('php://input'), true);
+        $data = checkPassword($edit_password);
         $stmt = $pdo->prepare("DELETE FROM cards WHERE id = ?");
         $stmt->execute([$data['id']]);
         echo json_encode(['success' => true]);
         break;
 
     case 'deleteGame':
-        $data = json_decode(file_get_contents('php://input'), true);
+        $data = checkPassword($edit_password);
         $stmt = $pdo->prepare("DELETE FROM games WHERE id = ?");
         $stmt->execute([$data['id']]);
         echo json_encode(['success' => true]);
@@ -155,7 +170,7 @@ switch ($action) {
 
     case 'importInitialData':
         // Import initial dataset (run once)
-        $data = json_decode(file_get_contents('php://input'), true);
+        $data = checkPassword($edit_password);
 
         // Clear existing data
         $pdo->exec("TRUNCATE TABLE cards");

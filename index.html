@@ -792,6 +792,23 @@
         // API endpoint
         const API_URL = 'api.php';
 
+        // Password handling
+        function getPassword() {
+            let password = localStorage.getItem('editPassword');
+            if (!password) {
+                password = prompt('Enter edit password:');
+                if (password) {
+                    localStorage.setItem('editPassword', password);
+                }
+            }
+            return password;
+        }
+
+        function clearPassword() {
+            localStorage.removeItem('editPassword');
+            showToast('Password cleared');
+        }
+
         // Active data arrays (loaded from database)
         let cardData = [];
         let gameData = [];
@@ -1499,13 +1516,25 @@
         }
 
         async function saveCard(card) {
+            const password = getPassword();
+            if (!password) return false;
+
             try {
+                card.password = password;
                 const response = await fetch(`${API_URL}?action=saveCard`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(card)
                 });
                 const result = await response.json();
+
+                if (result.error) {
+                    if (result.error === 'Invalid password') {
+                        localStorage.removeItem('editPassword');
+                        showToast('Wrong password');
+                    }
+                    return false;
+                }
 
                 if (result.success) {
                     card.id = result.id;
@@ -1522,14 +1551,24 @@
         }
 
         async function updateCard(id, updatedCard) {
+            const password = getPassword();
+            if (!password) return false;
+
             try {
                 updatedCard.id = id;
+                updatedCard.password = password;
                 const response = await fetch(`${API_URL}?action=saveCard`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updatedCard)
                 });
                 const result = await response.json();
+
+                if (result.error === 'Invalid password') {
+                    localStorage.removeItem('editPassword');
+                    showToast('Wrong password');
+                    return false;
+                }
 
                 if (result.success) {
                     const cardIndex = cardData.findIndex(c => c.id == id);
@@ -1550,13 +1589,22 @@
         async function deleteCard(id) {
             if (!confirm('Delete this card?')) return;
 
+            const password = getPassword();
+            if (!password) return;
+
             try {
                 const response = await fetch(`${API_URL}?action=deleteCard`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: id })
+                    body: JSON.stringify({ id: id, password: password })
                 });
                 const result = await response.json();
+
+                if (result.error === 'Invalid password') {
+                    localStorage.removeItem('editPassword');
+                    showToast('Wrong password');
+                    return;
+                }
 
                 if (result.success) {
                     const index = cardData.findIndex(c => c.id == id);
@@ -1598,13 +1646,23 @@
         }
 
         async function saveGame(game) {
+            const password = getPassword();
+            if (!password) return false;
+
             try {
+                game.password = password;
                 const response = await fetch(`${API_URL}?action=saveGame`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(game)
                 });
                 const result = await response.json();
+
+                if (result.error === 'Invalid password') {
+                    localStorage.removeItem('editPassword');
+                    showToast('Wrong password');
+                    return false;
+                }
 
                 if (result.success) {
                     game.id = result.id;
@@ -1621,14 +1679,24 @@
         }
 
         async function updateGame(id, updatedGame) {
+            const password = getPassword();
+            if (!password) return false;
+
             try {
                 updatedGame.id = id;
+                updatedGame.password = password;
                 const response = await fetch(`${API_URL}?action=saveGame`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updatedGame)
                 });
                 const result = await response.json();
+
+                if (result.error === 'Invalid password') {
+                    localStorage.removeItem('editPassword');
+                    showToast('Wrong password');
+                    return false;
+                }
 
                 if (result.success) {
                     const gameIndex = gameData.findIndex(g => g.id == id);
@@ -1649,13 +1717,22 @@
         async function deleteGame(id) {
             if (!confirm('Delete this game result?')) return;
 
+            const password = getPassword();
+            if (!password) return;
+
             try {
                 const response = await fetch(`${API_URL}?action=deleteGame`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: id })
+                    body: JSON.stringify({ id: id, password: password })
                 });
                 const result = await response.json();
+
+                if (result.error === 'Invalid password') {
+                    localStorage.removeItem('editPassword');
+                    showToast('Wrong password');
+                    return;
+                }
 
                 if (result.success) {
                     const index = gameData.findIndex(g => g.id == id);
@@ -1749,16 +1826,26 @@
         async function importInitialData() {
             if (!confirm('Import initial dataset to database? This will replace all existing data.')) return;
 
+            const password = getPassword();
+            if (!password) return;
+
             try {
                 const response = await fetch(`${API_URL}?action=importInitialData`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         cards: INITIAL_CARD_DATA,
-                        games: INITIAL_GAME_DATA
+                        games: INITIAL_GAME_DATA,
+                        password: password
                     })
                 });
                 const result = await response.json();
+
+                if (result.error === 'Invalid password') {
+                    localStorage.removeItem('editPassword');
+                    showToast('Wrong password');
+                    return;
+                }
 
                 if (result.success) {
                     showToast(`Imported ${result.cardsImported} cards and ${result.gamesImported} games!`);
