@@ -162,31 +162,33 @@
 
         .tabs {
             display: flex;
-            gap: 10px;
+            gap: 0;
             margin-bottom: 20px;
-            flex-wrap: wrap;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .tab-btn {
             padding: 12px 25px;
             border: none;
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--light);
-            border-radius: 8px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.5);
+            border-radius: 0;
             cursor: pointer;
-            font-size: 1em;
+            font-size: 0.9em;
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
         }
 
         .tab-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
+            color: var(--light);
         }
 
         .tab-btn.active {
-            background: var(--primary);
-            box-shadow: 0 5px 15px rgba(230, 36, 41, 0.4);
+            color: var(--secondary);
+            border-bottom-color: var(--secondary);
         }
 
         .tab-content {
@@ -207,19 +209,21 @@
         }
 
         th {
-            background: linear-gradient(135deg, var(--primary) 0%, #8b0000 100%);
+            background: transparent;
             padding: 15px 12px;
             text-align: left;
             text-transform: uppercase;
             font-size: 0.85em;
             letter-spacing: 1px;
             cursor: pointer;
-            transition: background 0.3s ease;
+            transition: color 0.3s ease;
             white-space: nowrap;
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         th:hover {
-            background: linear-gradient(135deg, #ff3d43 0%, #a00000 100%);
+            color: #6fa8dc;
         }
 
         th.sortable::after {
@@ -252,8 +256,8 @@
         }
 
         .rating .star.filled {
-            color: #ffd700;
-            text-shadow: 0 0 3px rgba(255, 215, 0, 0.5);
+            color: var(--secondary);
+            text-shadow: 0 0 3px rgba(81, 140, 202, 0.5);
         }
 
         .rating-number {
@@ -362,7 +366,7 @@
 
         .bar-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            background: var(--secondary);
             border-radius: 10px;
             transition: width 0.5s ease;
         }
@@ -380,6 +384,172 @@
             margin-top: 40px;
             color: rgba(255, 255, 255, 0.5);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Add Data Form Styles */
+        .form-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .form-section h3 {
+            color: var(--secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.95em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 0.8em;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            background: var(--darker);
+            color: var(--light);
+            font-size: 0.95em;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--secondary);
+            outline: none;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #6fa8dc;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ff6b6b;
+        }
+
+        .btn-cancel {
+            background: #6b7280;
+            color: white;
+            margin-left: 10px;
+        }
+
+        .btn-cancel:hover {
+            background: #9ca3af;
+        }
+
+        .form-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: var(--success);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .data-count {
+            font-size: 0.85em;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 10px;
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            transition: all 0.2s ease;
+        }
+
+        .btn-edit {
+            color: var(--secondary);
+        }
+
+        .btn-edit:hover {
+            background: rgba(81, 140, 202, 0.2);
+        }
+
+        .btn-delete {
+            color: var(--danger);
+        }
+
+        .btn-delete:hover {
+            background: rgba(220, 53, 69, 0.2);
+        }
+
+        .editing-mode .form-section h3::after {
+            content: ' (Editing)';
+            color: var(--secondary);
         }
     </style>
 </head>
@@ -434,6 +604,7 @@
             <button class="tab-btn active" data-tab="cards">All Cards</button>
             <button class="tab-btn" data-tab="games">Game Results</button>
             <button class="tab-btn" data-tab="stats">Statistics</button>
+            <button class="tab-btn" data-tab="addData">+ Add Data</button>
         </div>
 
         <div id="cardsTab" class="tab-content active">
@@ -445,6 +616,7 @@
                         <th class="sortable" data-sort="name">Name</th>
                         <th class="sortable" data-sort="comment">Comment</th>
                         <th class="sortable" data-sort="ranking">Rating</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody id="cardsBody">
@@ -459,14 +631,13 @@
                         <th class="sortable" data-sort="expansion">Expansion</th>
                         <th class="sortable" data-sort="name">Scheme</th>
                         <th class="sortable" data-sort="victoryPile">Victory Pile</th>
-                        <th>Bystanders</th>
-                        <th>Twists</th>
-                        <th>Twist Penalty</th>
-                        <th>Escaped</th>
-                        <th>Escape Penalty</th>
+                        <th>Bystanders (Penalty)</th>
+                        <th>Twists (Penalty)</th>
+                        <th>Escaped (Penalty)</th>
                         <th class="sortable" data-sort="sum">Total Score</th>
                         <th>Heroes Used</th>
                         <th>Result</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody id="gamesBody">
@@ -494,6 +665,112 @@
                 </div>
             </div>
         </div>
+
+        <div id="addDataTab" class="tab-content">
+            <div class="form-section">
+                <h3>Add Card (Hero, Mastermind, Scheme, or Villain)</h3>
+                <form id="cardForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Expansion</label>
+                            <input type="text" id="cardExpansion" required placeholder="e.g., X-Men">
+                        </div>
+                        <div class="form-group">
+                            <label>Type</label>
+                            <select id="cardType" required>
+                                <option value="Hero">Hero</option>
+                                <option value="Mastermind">Mastermind</option>
+                                <option value="Scheme">Scheme</option>
+                                <option value="Villain">Villain</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" id="cardName" required placeholder="Card name">
+                        </div>
+                        <div class="form-group">
+                            <label>Rating (1-10)</label>
+                            <input type="number" id="cardRating" min="1" max="10" placeholder="7">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Comment</label>
+                            <input type="text" id="cardComment" placeholder="Your thoughts...">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Add Card</button>
+                        <button type="button" class="btn btn-cancel" onclick="resetCardForm()" style="display:none;">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="form-section">
+                <h3>Add Game Result</h3>
+                <form id="gameForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Expansion</label>
+                            <input type="text" id="gameExpansion" required placeholder="e.g., X-Men">
+                        </div>
+                        <div class="form-group">
+                            <label>Scheme Name</label>
+                            <input type="text" id="gameName" required placeholder="Scheme name">
+                        </div>
+                        <div class="form-group">
+                            <label>Rating (1-10)</label>
+                            <input type="number" id="gameRating" min="1" max="10" placeholder="7">
+                        </div>
+                        <div class="form-group">
+                            <label>Victory Pile</label>
+                            <input type="number" id="gameVictoryPile" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Bystanders Carried Away</label>
+                            <input type="number" id="gameBystanders" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Scheme Twists</label>
+                            <input type="number" id="gameTwists" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Villains Escaped</label>
+                            <input type="number" id="gameEscaped" min="0" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Result</label>
+                            <select id="gameResult">
+                                <option value="">-</option>
+                                <option value="Vann">Win</option>
+                                <option value="Förlorade">Loss</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Heroes & Mastermind Used</label>
+                            <input type="text" id="gameHeroes" placeholder="e.g., Wolverine, Storm, Magneto">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Comment</label>
+                            <input type="text" id="gameComment" placeholder="Notes about the game...">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Add Game Result</button>
+                        <button type="button" class="btn btn-cancel" onclick="resetGameForm()" style="display:none;">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="form-section">
+                <h3>Manage Data</h3>
+                <p class="data-count" id="dataCount"></p>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-primary" onclick="exportData()">Export Data (JSON)</button>
+                    <button type="button" class="btn btn-danger" onclick="clearCustomData()">Clear Custom Data</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="toast" class="toast"></div>
 
         <footer>
             <p>Marvel Legendary Statistics Tracker</p>
@@ -940,16 +1217,22 @@
         function renderCardsTable(data) {
             const tbody = document.getElementById('cardsBody');
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="no-results">No cards found matching your criteria</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="no-results">No cards found matching your criteria</td></tr>';
                 return;
             }
-            tbody.innerHTML = data.map(card => `
+            tbody.innerHTML = data.map((card, index) => `
                 <tr>
                     <td><span class="expansion-tag" style="background-color: ${getExpansionColor(card.expansion)}">${card.expansion}</span></td>
                     <td><span class="card-type">${card.type}</span></td>
                     <td><strong>${card.name}</strong></td>
                     <td>${card.comment || '-'}</td>
                     <td>${renderStars(card.ranking)}</td>
+                    <td>${card._custom ? `
+                        <div class="row-actions">
+                            <button class="btn-icon btn-edit" onclick="editCard(${card._id})" title="Edit">✎</button>
+                            <button class="btn-icon btn-delete" onclick="deleteCard(${card._id})" title="Delete">✕</button>
+                        </div>
+                    ` : ''}</td>
                 </tr>
             `).join('');
         }
@@ -958,7 +1241,7 @@
             const tbody = document.getElementById('gamesBody');
             const gamesWithResults = data.filter(g => g.victoryPile > 0 || g.sum !== 0);
             if (gamesWithResults.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" class="no-results">No game results found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="no-results">No game results found</td></tr>';
                 return;
             }
             tbody.innerHTML = gamesWithResults.map(game => {
@@ -969,13 +1252,17 @@
                     <td><strong>${game.name}</strong></td>
                     <td>${game.victoryPile}</td>
                     <td>${game.bystanders} <span class="score-negative">(${game.bystanderPenalty})</span></td>
-                    <td>${game.twists}</td>
-                    <td class="score-negative">${game.twistPenalty}</td>
-                    <td>${game.escaped}</td>
-                    <td class="score-negative">${game.escapePenalty}</td>
+                    <td>${game.twists} <span class="score-negative">(${game.twistPenalty})</span></td>
+                    <td>${game.escaped} <span class="score-negative">(${game.escapePenalty})</span></td>
                     <td class="${game.sum >= 0 ? 'score-positive' : 'score-negative'}"><strong>${game.sum}</strong></td>
                     <td class="game-details">${game.heroes || '-'}</td>
                     <td class="${winStatus === true ? 'result-win' : winStatus === false ? 'result-loss' : ''}">${winStatus === true ? 'WIN' : winStatus === false ? 'LOSS' : '-'}</td>
+                    <td>${game._custom ? `
+                        <div class="row-actions">
+                            <button class="btn-icon btn-edit" onclick="editGame(${game._id})" title="Edit">✎</button>
+                            <button class="btn-icon btn-delete" onclick="deleteGame(${game._id})" title="Delete">✕</button>
+                        </div>
+                    ` : ''}</td>
                 </tr>
             `}).join('');
         }
@@ -1167,7 +1454,309 @@
         // Make filterData globally accessible for inline handlers
         window.filterData = filterData;
 
+        // LocalStorage handling
+        let editingCardId = null;
+        let editingGameId = null;
+
+        function loadCustomData() {
+            const customCards = JSON.parse(localStorage.getItem('customCards') || '[]');
+            const customGames = JSON.parse(localStorage.getItem('customGames') || '[]');
+
+            // Add custom data to arrays with _custom flag and _id
+            customCards.forEach(card => {
+                card._custom = true;
+                cardData.push(card);
+            });
+            customGames.forEach(game => {
+                game._custom = true;
+                gameData.push(game);
+            });
+
+            updateDataCount();
+        }
+
+        function saveCard(card) {
+            const customCards = JSON.parse(localStorage.getItem('customCards') || '[]');
+            card._custom = true;
+            card._id = Date.now();
+            customCards.push(card);
+            localStorage.setItem('customCards', JSON.stringify(customCards));
+            cardData.push(card);
+            updateDataCount();
+        }
+
+        function updateCard(id, updatedCard) {
+            const customCards = JSON.parse(localStorage.getItem('customCards') || '[]');
+            const index = customCards.findIndex(c => c._id === id);
+            if (index !== -1) {
+                updatedCard._custom = true;
+                updatedCard._id = id;
+                customCards[index] = updatedCard;
+                localStorage.setItem('customCards', JSON.stringify(customCards));
+
+                // Update in cardData array
+                const cardIndex = cardData.findIndex(c => c._id === id);
+                if (cardIndex !== -1) {
+                    cardData[cardIndex] = updatedCard;
+                }
+            }
+            updateDataCount();
+        }
+
+        function deleteCard(id) {
+            if (!confirm('Delete this card?')) return;
+
+            const customCards = JSON.parse(localStorage.getItem('customCards') || '[]');
+            const filtered = customCards.filter(c => c._id !== id);
+            localStorage.setItem('customCards', JSON.stringify(filtered));
+
+            // Remove from cardData array
+            const index = cardData.findIndex(c => c._id === id);
+            if (index !== -1) {
+                cardData.splice(index, 1);
+            }
+
+            filterData();
+            updateDashboard();
+            showToast('Card deleted');
+        }
+
+        function editCard(id) {
+            const card = cardData.find(c => c._id === id);
+            if (!card) return;
+
+            editingCardId = id;
+
+            document.getElementById('cardExpansion').value = card.expansion;
+            document.getElementById('cardType').value = card.type;
+            document.getElementById('cardName').value = card.name;
+            document.getElementById('cardComment').value = card.comment || '';
+            document.getElementById('cardRating').value = card.ranking || '';
+
+            // Switch to Add Data tab and scroll to form
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector('[data-tab="addData"]').classList.add('active');
+            document.getElementById('addDataTab').classList.add('active');
+            document.getElementById('addDataTab').classList.add('editing-mode');
+
+            document.getElementById('cardForm').querySelector('button[type="submit"]').textContent = 'Update Card';
+            document.getElementById('cardForm').querySelector('.btn-cancel').style.display = 'inline-block';
+            document.getElementById('cardForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function saveGame(game) {
+            const customGames = JSON.parse(localStorage.getItem('customGames') || '[]');
+            game._custom = true;
+            game._id = Date.now();
+            customGames.push(game);
+            localStorage.setItem('customGames', JSON.stringify(customGames));
+            gameData.push(game);
+            updateDataCount();
+        }
+
+        function updateGame(id, updatedGame) {
+            const customGames = JSON.parse(localStorage.getItem('customGames') || '[]');
+            const index = customGames.findIndex(g => g._id === id);
+            if (index !== -1) {
+                updatedGame._custom = true;
+                updatedGame._id = id;
+                customGames[index] = updatedGame;
+                localStorage.setItem('customGames', JSON.stringify(customGames));
+
+                // Update in gameData array
+                const gameIndex = gameData.findIndex(g => g._id === id);
+                if (gameIndex !== -1) {
+                    gameData[gameIndex] = updatedGame;
+                }
+            }
+            updateDataCount();
+        }
+
+        function deleteGame(id) {
+            if (!confirm('Delete this game result?')) return;
+
+            const customGames = JSON.parse(localStorage.getItem('customGames') || '[]');
+            const filtered = customGames.filter(g => g._id !== id);
+            localStorage.setItem('customGames', JSON.stringify(filtered));
+
+            // Remove from gameData array
+            const index = gameData.findIndex(g => g._id === id);
+            if (index !== -1) {
+                gameData.splice(index, 1);
+            }
+
+            filterData();
+            updateDashboard();
+            showToast('Game result deleted');
+        }
+
+        function editGame(id) {
+            const game = gameData.find(g => g._id === id);
+            if (!game) return;
+
+            editingGameId = id;
+
+            document.getElementById('gameExpansion').value = game.expansion;
+            document.getElementById('gameName').value = game.name;
+            document.getElementById('gameComment').value = game.comment || '';
+            document.getElementById('gameRating').value = game.ranking || '';
+            document.getElementById('gameVictoryPile').value = game.victoryPile || 0;
+            document.getElementById('gameBystanders').value = game.bystanders || 0;
+            document.getElementById('gameTwists').value = game.twists || 0;
+            document.getElementById('gameEscaped').value = game.escaped || 0;
+            document.getElementById('gameHeroes').value = game.heroes || '';
+            document.getElementById('gameResult').value = game.result || '';
+
+            // Switch to Add Data tab and scroll to form
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector('[data-tab="addData"]').classList.add('active');
+            document.getElementById('addDataTab').classList.add('active');
+            document.getElementById('addDataTab').classList.add('editing-mode');
+
+            document.getElementById('gameForm').querySelector('button[type="submit"]').textContent = 'Update Game Result';
+            document.getElementById('gameForm').querySelector('.btn-cancel').style.display = 'inline-block';
+            document.getElementById('gameForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetCardForm() {
+            editingCardId = null;
+            document.getElementById('cardForm').reset();
+            document.getElementById('cardForm').querySelector('button[type="submit"]').textContent = 'Add Card';
+            document.getElementById('cardForm').querySelector('.btn-cancel').style.display = 'none';
+            document.getElementById('addDataTab').classList.remove('editing-mode');
+        }
+
+        function resetGameForm() {
+            editingGameId = null;
+            document.getElementById('gameForm').reset();
+            document.getElementById('gameForm').querySelector('button[type="submit"]').textContent = 'Add Game Result';
+            document.getElementById('gameForm').querySelector('.btn-cancel').style.display = 'none';
+            document.getElementById('addDataTab').classList.remove('editing-mode');
+        }
+
+        function updateDataCount() {
+            const customCards = JSON.parse(localStorage.getItem('customCards') || '[]');
+            const customGames = JSON.parse(localStorage.getItem('customGames') || '[]');
+            const countEl = document.getElementById('dataCount');
+            if (countEl) {
+                countEl.textContent = `Custom data: ${customCards.length} cards, ${customGames.length} game results`;
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function exportData() {
+            const customCards = JSON.parse(localStorage.getItem('customCards') || '[]');
+            const customGames = JSON.parse(localStorage.getItem('customGames') || '[]');
+            const data = { cards: customCards, games: customGames };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'marvel-legendary-data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Data exported!');
+        }
+
+        function clearCustomData() {
+            if (confirm('Are you sure you want to delete all custom data? This cannot be undone.')) {
+                localStorage.removeItem('customCards');
+                localStorage.removeItem('customGames');
+                showToast('Custom data cleared. Refresh to see changes.');
+            }
+        }
+
+        // Form handlers
+        document.getElementById('cardForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const card = {
+                expansion: document.getElementById('cardExpansion').value,
+                type: document.getElementById('cardType').value,
+                name: document.getElementById('cardName').value,
+                comment: document.getElementById('cardComment').value,
+                ranking: parseInt(document.getElementById('cardRating').value) || null
+            };
+
+            if (editingCardId) {
+                updateCard(editingCardId, card);
+                resetCardForm();
+                showToast('Card updated successfully!');
+            } else {
+                saveCard(card);
+                this.reset();
+                showToast('Card added successfully!');
+            }
+
+            // Refresh displays
+            filterData();
+            updateDashboard();
+        });
+
+        document.getElementById('gameForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const twists = parseInt(document.getElementById('gameTwists').value) || 0;
+            const escaped = parseInt(document.getElementById('gameEscaped').value) || 0;
+            const bystanders = parseInt(document.getElementById('gameBystanders').value) || 0;
+            const victoryPile = parseInt(document.getElementById('gameVictoryPile').value) || 0;
+            const twistPenalty = twists * -3;
+            const escapePenalty = escaped * -1;
+            const bystanderPenalty = bystanders * -4;
+            const sum = victoryPile + bystanderPenalty + twistPenalty + escapePenalty;
+
+            const game = {
+                expansion: document.getElementById('gameExpansion').value,
+                name: document.getElementById('gameName').value,
+                comment: document.getElementById('gameComment').value,
+                ranking: parseInt(document.getElementById('gameRating').value) || null,
+                victoryPile: victoryPile,
+                bystanders: bystanders,
+                bystanderPenalty: bystanderPenalty,
+                twists: twists,
+                twistPenalty: twistPenalty,
+                escaped: escaped,
+                escapePenalty: escapePenalty,
+                sum: sum,
+                heroes: document.getElementById('gameHeroes').value,
+                result: document.getElementById('gameResult').value
+            };
+
+            if (editingGameId) {
+                updateGame(editingGameId, game);
+                resetGameForm();
+                showToast('Game result updated successfully!');
+            } else {
+                saveGame(game);
+                this.reset();
+                showToast('Game result added successfully!');
+            }
+
+            // Refresh displays
+            filterData();
+            updateDashboard();
+        });
+
+        // Make functions globally accessible
+        window.exportData = exportData;
+        window.clearCustomData = clearCustomData;
+        window.editCard = editCard;
+        window.deleteCard = deleteCard;
+        window.editGame = editGame;
+        window.deleteGame = deleteGame;
+        window.resetCardForm = resetCardForm;
+        window.resetGameForm = resetGameForm;
+
         // Initialize
+        loadCustomData();
         populateFilters();
         renderCardsTable(cardData);
         renderGamesTable(gameData);
