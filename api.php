@@ -2,7 +2,7 @@
 // Marvel Legendary Stats API
 
 // EDIT PASSWORD - Change this to your secret password
-$edit_password = 'CHANGE_THIS_PASSWORD';
+$edit_password = '131313';
 
 // Database configuration for one.com
 $db_host = 'globbin.se.mysql';
