@@ -241,43 +241,49 @@
         }
 
         .rating {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.9em;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 0.85em;
         }
 
-        .rating-10, .rating-9 { background: linear-gradient(135deg, #28a745, #20c997); }
-        .rating-8, .rating-7 { background: linear-gradient(135deg, var(--secondary), #6fa8dc); }
-        .rating-6, .rating-5 { background: linear-gradient(135deg, #ffc107, #ffdb4d); color: #333; }
-        .rating-4, .rating-3 { background: linear-gradient(135deg, #fd7e14, #ff9a44); }
-        .rating-2, .rating-1 { background: linear-gradient(135deg, var(--danger), #ff6b6b); }
+        .rating .star {
+            color: #444;
+        }
+
+        .rating .star.filled {
+            color: #ffd700;
+            text-shadow: 0 0 3px rgba(255, 215, 0, 0.5);
+        }
+
+        .rating-number {
+            margin-left: 5px;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.85em;
+        }
 
         .card-type {
             display: inline-block;
-            padding: 4px 10px;
-            border-radius: 5px;
-            font-size: 0.8em;
-            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 500;
             text-transform: uppercase;
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.8);
         }
-
-        .type-hero { background: var(--secondary); }
-        .type-mastermind { background: #9b59b6; }
-        .type-scheme { background: #e67e22; }
-        .type-villain { background: var(--danger); }
-
-        .result-win { color: var(--success); font-weight: bold; }
-        .result-loss { color: var(--danger); font-weight: bold; }
 
         .expansion-tag {
             display: inline-block;
             padding: 3px 8px;
-            background: rgba(255, 255, 255, 0.1);
             border-radius: 4px;
-            font-size: 0.85em;
+            font-size: 0.8em;
+            font-weight: 500;
+            color: #fff;
         }
+
+        .result-win { color: var(--success); font-weight: bold; }
+        .result-loss { color: var(--danger); font-weight: bold; }
 
         .score-positive { color: var(--success); }
         .score-negative { color: var(--danger); }
@@ -409,7 +415,7 @@
             </div>
             <div class="filter-group">
                 <label>Search</label>
-                <input type="text" id="searchInput" placeholder="Search cards...">
+                <input type="text" id="searchInput" placeholder="Search cards..." oninput="filterData()" onkeyup="filterData()">
             </div>
             <div class="filter-group">
                 <label>Min Rating</label>
@@ -858,6 +864,42 @@
             return expansions;
         }
 
+        // Expansion colors - distinct colors for each expansion
+        const expansionColors = {
+            "Annihilation": "#8B5CF6",
+            "Ant-Man": "#EF4444",
+            "Black Panther": "#6366F1",
+            "Black Widow": "#EC4899",
+            "Captain America": "#3B82F6",
+            "Champions": "#F59E0B",
+            "Civil War": "#6B7280",
+            "Core set": "#10B981",
+            "Dark City": "#7C3AED",
+            "Deadpool": "#DC2626",
+            "Dimensions": "#14B8A6",
+            "Doctor Strange": "#8B5CF6",
+            "Fantastic Four": "#0EA5E9",
+            "Heroes of Asgard": "#FBBF24",
+            "Into the cosmos": "#6366F1",
+            "Midnight Sons": "#4B5563",
+            "New Mutants": "#F472B6",
+            "Noir": "#374151",
+            "Paint the town red": "#EF4444",
+            "Realm of Kings": "#A855F7",
+            "Revelations": "#22C55E",
+            "S.H.I.E.L.D.S.": "#0284C7",
+            "Secret Wars 2": "#EA580C",
+            "Secret Wars vol1": "#F97316",
+            "Secret Wars vol2": "#FB923C",
+            "Venom": "#1F2937",
+            "World war Hulk": "#22C55E",
+            "X-Men": "#FACC15"
+        };
+
+        function getExpansionColor(expansion) {
+            return expansionColors[expansion] || "#6B7280";
+        }
+
         function populateFilters() {
             const expansionSelect = document.getElementById('filterExpansion');
             getExpansions().forEach(exp => {
@@ -868,9 +910,18 @@
             });
         }
 
-        function getRatingClass(rating) {
-            if (!rating) return '';
-            return `rating-${rating}`;
+        function renderStars(rating) {
+            if (!rating) return '-';
+            const maxStars = 10;
+            let stars = '';
+            for (let i = 1; i <= maxStars; i++) {
+                if (i <= rating) {
+                    stars += '<span class="star filled">★</span>';
+                } else {
+                    stars += '<span class="star">★</span>';
+                }
+            }
+            return `<span class="rating">${stars}<span class="rating-number">${rating}</span></span>`;
         }
 
         function getTypeClass(type) {
@@ -894,11 +945,11 @@
             }
             tbody.innerHTML = data.map(card => `
                 <tr>
-                    <td><span class="expansion-tag">${card.expansion}</span></td>
-                    <td><span class="card-type ${getTypeClass(card.type)}">${card.type}</span></td>
+                    <td><span class="expansion-tag" style="background-color: ${getExpansionColor(card.expansion)}">${card.expansion}</span></td>
+                    <td><span class="card-type">${card.type}</span></td>
                     <td><strong>${card.name}</strong></td>
                     <td>${card.comment || '-'}</td>
-                    <td>${card.ranking ? `<span class="rating ${getRatingClass(card.ranking)}">${card.ranking}</span>` : '-'}</td>
+                    <td>${renderStars(card.ranking)}</td>
                 </tr>
             `).join('');
         }
@@ -914,7 +965,7 @@
                 const winStatus = isWin(game.result);
                 return `
                 <tr>
-                    <td><span class="expansion-tag">${game.expansion}</span></td>
+                    <td><span class="expansion-tag" style="background-color: ${getExpansionColor(game.expansion)}">${game.expansion}</span></td>
                     <td><strong>${game.name}</strong></td>
                     <td>${game.victoryPile}</td>
                     <td>${game.bystanders} <span class="score-negative">(${game.bystanderPenalty})</span></td>
@@ -929,25 +980,25 @@
             `}).join('');
         }
 
-        function renderStats() {
+        function renderStats(filteredCards = cardData, filteredGames = gameData) {
             // Top Heroes
-            const heroes = cardData.filter(c => c.type === 'Hero' && c.ranking);
+            const heroes = filteredCards.filter(c => c.type === 'Hero' && c.ranking);
             const topHeroes = [...heroes].sort((a, b) => b.ranking - a.ranking).slice(0, 8);
             renderBarChart('topHeroesChart', topHeroes, 10);
 
             // Top Schemes
-            const schemes = gameData.filter(g => g.ranking);
+            const schemes = filteredCards.filter(c => c.type === 'Scheme' && c.ranking);
             const topSchemes = [...schemes].sort((a, b) => b.ranking - a.ranking).slice(0, 8);
             renderBarChart('topSchemesChart', topSchemes, 10);
 
             // Top Masterminds
-            const masterminds = cardData.filter(c => c.type === 'Mastermind' && c.ranking);
+            const masterminds = filteredCards.filter(c => c.type === 'Mastermind' && c.ranking);
             const topMasterminds = [...masterminds].sort((a, b) => b.ranking - a.ranking).slice(0, 8);
             renderBarChart('topMastermindsChart', topMasterminds, 10);
 
             // Expansion Ratings
             const expansionRatings = {};
-            cardData.filter(c => c.ranking).forEach(card => {
+            filteredCards.filter(c => c.ranking).forEach(card => {
                 if (!expansionRatings[card.expansion]) {
                     expansionRatings[card.expansion] = { total: 0, count: 0 };
                 }
@@ -1055,6 +1106,7 @@
 
             renderCardsTable(filteredCards);
             renderGamesTable(filteredGames);
+            renderStats(filteredCards, filteredGames);
         }
 
         // Sorting
@@ -1111,6 +1163,9 @@
         document.querySelectorAll('#gamesTable th.sortable').forEach(th => {
             th.addEventListener('click', () => sortTable(th.dataset.sort, 'games'));
         });
+
+        // Make filterData globally accessible for inline handlers
+        window.filterData = filterData;
 
         // Initialize
         populateFilters();
