@@ -516,9 +516,20 @@
             margin-top: 10px;
         }
 
+        .actions-header {
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .actions-cell {
+            text-align: center;
+            color: #666;
+        }
+
         .row-actions {
             display: flex;
             gap: 5px;
+            justify-content: center;
         }
 
         .btn-icon {
@@ -616,7 +627,7 @@
                         <th class="sortable" data-sort="name">Name</th>
                         <th class="sortable" data-sort="comment">Comment</th>
                         <th class="sortable" data-sort="ranking">Rating</th>
-                        <th></th>
+                        <th class="actions-header">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="cardsBody">
@@ -637,7 +648,7 @@
                         <th class="sortable" data-sort="sum">Total Score</th>
                         <th>Heroes Used</th>
                         <th>Result</th>
-                        <th></th>
+                        <th class="actions-header">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="gamesBody">
@@ -1227,12 +1238,12 @@
                     <td><strong>${card.name}</strong></td>
                     <td>${card.comment || '-'}</td>
                     <td>${renderStars(card.ranking)}</td>
-                    <td>${card._custom ? `
+                    <td class="actions-cell">${card._custom ? `
                         <div class="row-actions">
                             <button class="btn-icon btn-edit" onclick="editCard(${card._id})" title="Edit">✎</button>
                             <button class="btn-icon btn-delete" onclick="deleteCard(${card._id})" title="Delete">✕</button>
                         </div>
-                    ` : ''}</td>
+                    ` : '-'}</td>
                 </tr>
             `).join('');
         }
@@ -1257,12 +1268,12 @@
                     <td class="${game.sum >= 0 ? 'score-positive' : 'score-negative'}"><strong>${game.sum}</strong></td>
                     <td class="game-details">${game.heroes || '-'}</td>
                     <td class="${winStatus === true ? 'result-win' : winStatus === false ? 'result-loss' : ''}">${winStatus === true ? 'WIN' : winStatus === false ? 'LOSS' : '-'}</td>
-                    <td>${game._custom ? `
+                    <td class="actions-cell">${game._custom ? `
                         <div class="row-actions">
                             <button class="btn-icon btn-edit" onclick="editGame(${game._id})" title="Edit">✎</button>
                             <button class="btn-icon btn-delete" onclick="deleteGame(${game._id})" title="Delete">✕</button>
                         </div>
-                    ` : ''}</td>
+                    ` : '-'}</td>
                 </tr>
             `}).join('');
         }
