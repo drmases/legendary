@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marvel Legendary Statistics</title>
+    <style>
+        :root {
+            --primary: #e62429;
+            --secondary: #518cca;
+            --dark: #1a1a2e;
+            --darker: #0f0f1a;
+            --light: #f5f5f5;
+            --gold: #ffd700;
+            --success: #28a745;
+            --danger: #dc3545;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--light);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 15px 20px 8px;
+            margin-bottom: 12px;
+            position: relative;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo-container {
+            display: inline-block;
+            position: relative;
+        }
+
+        header h1 {
+            font-size: 2.2em;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            margin: 0;
+            color: #e62429;
+            text-shadow:
+                2px 2px 0 #000,
+                -1px -1px 0 #000,
+                1px -1px 0 #000,
+                -1px 1px 0 #000;
+            transform: skewX(-5deg);
+            display: inline-block;
+        }
+
+        header h1 span {
+            color: #fff;
+        }
+
+        header p {
+            font-size: 0.65em;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 3px;
+        }
+
+        .stats-dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 15px;
+            border-radius: 6px;
+            text-align: center;
+            border-left: 3px solid var(--primary);
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .stat-card h3 {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.6em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+
+        .stat-card .number {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .stat-card.wins { border-left-color: var(--success); }
+        .stat-card.wins .number { color: var(--success); }
+        .stat-card.losses { border-left-color: var(--danger); }
+        .stat-card.losses .number { color: var(--danger); }
+
+        .filters {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-size: 0.85em;
+            color: var(--secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        select, input[type="text"] {
+            padding: 10px 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: var(--darker);
+            color: var(--light);
+            font-size: 1em;
+            min-width: 180px;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        select:hover, input[type="text"]:hover,
+        select:focus, input[type="text"]:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 25px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            box-shadow: 0 5px 15px rgba(230, 36, 41, 0.4);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        th {
+            background: linear-gradient(135deg, var(--primary) 0%, #8b0000 100%);
+            padding: 15px 12px;
+            text-align: left;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            white-space: nowrap;
+        }
+
+        th:hover {
+            background: linear-gradient(135deg, #ff3d43 0%, #a00000 100%);
+        }
+
+        th.sortable::after {
+            content: ' \2195';
+            opacity: 0.5;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .rating {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .rating-10, .rating-9 { background: linear-gradient(135deg, #28a745, #20c997); }
+        .rating-8, .rating-7 { background: linear-gradient(135deg, var(--secondary), #6fa8dc); }
+        .rating-6, .rating-5 { background: linear-gradient(135deg, #ffc107, #ffdb4d); color: #333; }
+        .rating-4, .rating-3 { background: linear-gradient(135deg, #fd7e14, #ff9a44); }
+        .rating-2, .rating-1 { background: linear-gradient(135deg, var(--danger), #ff6b6b); }
+
+        .card-type {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .type-hero { background: var(--secondary); }
+        .type-mastermind { background: #9b59b6; }
+        .type-scheme { background: #e67e22; }
+        .type-villain { background: var(--danger); }
+
+        .result-win { color: var(--success); font-weight: bold; }
+        .result-loss { color: var(--danger); font-weight: bold; }
+
+        .expansion-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        .score-positive { color: var(--success); }
+        .score-negative { color: var(--danger); }
+
+        .game-details {
+            font-size: 0.85em;
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 300px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.8em; }
+            .filters { flex-direction: column; }
+            select, input[type="text"] { width: 100%; }
+            table { font-size: 0.9em; }
+            td, th { padding: 8px 6px; }
+            .game-details { max-width: 150px; }
+        }
+
+        .charts-section {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-card h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.95em;
+        }
+
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bar-label {
+            width: 120px;
+            font-size: 0.85em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bar-container {
+            flex: 1;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .bar-value {
+            width: 40px;
+            text-align: right;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 40px;
+            color: rgba(255, 255, 255, 0.5);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <h1><span>MARVEL</span> LEGENDARY</h1>
+            </div>
+            <p>Game Statistics & Card Database</p>
+        </header>
+
+        <div class="stats-dashboard" id="statsDashboard">
+            <!-- Stats will be populated by JavaScript -->
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label>Expansion</label>
+                <select id="filterExpansion">
+                    <option value="">All Expansions</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Card Type</label>
+                <select id="filterType">
+                    <option value="">All Types</option>
+                    <option value="Hero">Heroes</option>
+                    <option value="Mastermind">Masterminds</option>
+                    <option value="Scheme">Schemes</option>
+                    <option value="Villain">Villains</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Search</label>
+                <input type="text" id="searchInput" placeholder="Search cards...">
+            </div>
+            <div class="filter-group">
+                <label>Min Rating</label>
+                <select id="filterRating">
+                    <option value="">Any Rating</option>
+                    <option value="9">9+</option>
+                    <option value="8">8+</option>
+                    <option value="7">7+</option>
+                    <option value="6">6+</option>
+                    <option value="5">5+</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="cards">All Cards</button>
+            <button class="tab-btn" data-tab="games">Game Results</button>
+            <button class="tab-btn" data-tab="stats">Statistics</button>
+        </div>
+
+        <div id="cardsTab" class="tab-content active">
+            <table id="cardsTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="expansion">Expansion</th>
+                        <th class="sortable" data-sort="type">Type</th>
+                        <th class="sortable" data-sort="name">Name</th>
+                        <th class="sortable" data-sort="comment">Comment</th>
+                        <th class="sortable" data-sort="ranking">Rating</th>
+                    </tr>
+                </thead>
+                <tbody id="cardsBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div id="gamesTab" class="tab-content">
+            <table id="gamesTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="expansion">Expansion</th>
+                        <th class="sortable" data-sort="name">Scheme</th>
+                        <th class="sortable" data-sort="victoryPile">Victory Pile</th>
+                        <th>Bystanders</th>
+                        <th>Twists</th>
+                        <th>Twist Penalty</th>
+                        <th>Escaped</th>
+                        <th>Escape Penalty</th>
+                        <th class="sortable" data-sort="sum">Total Score</th>
+                        <th>Heroes Used</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody id="gamesBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div id="statsTab" class="tab-content">
+            <div class="charts-section">
+                <div class="chart-card">
+                    <h3>Top Rated Heroes</h3>
+                    <div class="bar-chart" id="topHeroesChart"></div>
+                </div>
+                <div class="chart-card">
+                    <h3>Top Rated Schemes</h3>
+                    <div class="bar-chart" id="topSchemesChart"></div>
+                </div>
+                <div class="chart-card">
+                    <h3>Top Rated Masterminds</h3>
+                    <div class="bar-chart" id="topMastermindsChart"></div>
+                </div>
+                <div class="chart-card">
+                    <h3>Expansions by Avg Rating</h3>
+                    <div class="bar-chart" id="expansionRatingsChart"></div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Marvel Legendary Statistics Tracker</p>
+        </footer>
+    </div>
+
+    <script>
+        // Data
+        const cardData = [
+            { expansion: "Annihilation", type: "Hero", name: "Brainstorm", comment: "Kul", ranking: 7 },
+            { expansion: "Annihilation", type: "Hero", name: "PSI-Lord", comment: "Ok", ranking: 6 },
+            { expansion: "Annihilation", type: "Hero", name: "Fantastic Four United", comment: "Ok", ranking: 6 },
+            { expansion: "Annihilation", type: "Hero", name: "Super-Skrull", comment: "Kul", ranking: 9 },
+            { expansion: "Annihilation", type: "Hero", name: "Heralds of Galactus", comment: "Vill prova igen", ranking: 7 },
+            { expansion: "Annihilation", type: "Mastermind", name: "Kang the Conqueror", comment: "Kul", ranking: 8 },
+            { expansion: "Annihilation", type: "Mastermind", name: "Annihilus", comment: "Kul", ranking: 8 },
+            { expansion: "Ant-Man", type: "Hero", name: "Ant-Man", comment: "Bra. Size-Changing känns lite för bra", ranking: 7 },
+            { expansion: "Ant-Man", type: "Hero", name: "Jocasta", comment: "Bra. Size-Changing känns lite för bra", ranking: 7 },
+            { expansion: "Ant-Man", type: "Hero", name: "Wasp", comment: "Vet ej riktigt", ranking: 6 },
+            { expansion: "Ant-Man", type: "Hero", name: "Wonder Man", comment: "Bra", ranking: 6 },
+            { expansion: "Ant-Man", type: "Mastermind", name: "Ultron", comment: "Ok", ranking: 6 },
+            { expansion: "Black Panther", type: "Mastermind", name: "Killmonger", comment: "Ok", ranking: 7 },
+            { expansion: "Black Panther", type: "Hero", name: "King Black Panther", comment: "Kul", ranking: 8 },
+            { expansion: "Black Panther", type: "Hero", name: "Princess Shuri", comment: "Bra", ranking: 7 },
+            { expansion: "Black Panther", type: "Hero", name: "Queen Storm of Wakanda", comment: "Ok", ranking: 7 },
+            { expansion: "Black Panther", type: "Mastermind", name: "Klaw", comment: "Rörig men kul när man fattar", ranking: 7 },
+            { expansion: "Black Panther", type: "Hero", name: "White Wolf", comment: "Kul", ranking: 8 },
+            { expansion: "Black Panther", type: "Hero", name: "General Okoye", comment: "Kul", ranking: 8 },
+            { expansion: "Black Widow", type: "Mastermind", name: "Indestructible Man", comment: "Kul", ranking: 8 },
+            { expansion: "Black Widow", type: "Hero", name: "Black Widow", comment: "Ok", ranking: 6 },
+            { expansion: "Black Widow", type: "Hero", name: "Yelena Belova", comment: "Kul", ranking: 8 },
+            { expansion: "Black Widow", type: "Hero", name: "Red Guardian", comment: "Kul", ranking: 7 },
+            { expansion: "Black Widow", type: "Hero", name: "White Tiger", comment: "Vet ej riktigt", ranking: 6 },
+            { expansion: "Black Widow", type: "Hero", name: "Falcon & Winter Soldier", comment: "Nja", ranking: 5 },
+            { expansion: "Black Widow", type: "Mastermind", name: "Taskmaster", comment: "Kul, myckat att hålla koll på", ranking: 7 },
+            { expansion: "Captain America", type: "Hero", name: "Winter Soldier", comment: "Kul", ranking: 8 },
+            { expansion: "Captain America", type: "Hero", name: "Captain America Falcon", comment: "Ok", ranking: 5 },
+            { expansion: "Captain America", type: "Hero", name: "Agent x-13", comment: "Ok", ranking: 7 },
+            { expansion: "Captain America", type: "Hero", name: "Steve Roger, Director of S.H.I.E.L.D", comment: "Ok", ranking: 6 },
+            { expansion: "Captain America", type: "Hero", name: "Captain America 1941", comment: "Ok", ranking: 6 },
+            { expansion: "Captain America", type: "Mastermind", name: "Baron Heinrich Zemo", comment: "Lätt", ranking: 6 },
+            { expansion: "Captain America", type: "Mastermind", name: "Arnim Zola", comment: "Kul", ranking: 7 },
+            { expansion: "Champions", type: "Hero", name: "Ms. Marvel", comment: "Kul", ranking: 8 },
+            { expansion: "Champions", type: "Hero", name: "Nova", comment: "Ok", ranking: 6 },
+            { expansion: "Champions", type: "Hero", name: "Viv Vision", comment: "Kul", ranking: 7 },
+            { expansion: "Champions", type: "Mastermind", name: "Pagliacci", comment: "Rätt tråkig", ranking: 5 },
+            { expansion: "Civil War", type: "Hero", name: "Cloak & Dagger", comment: "Tråkig", ranking: 2 },
+            { expansion: "Civil War", type: "Hero", name: "Dare Devil & Iron Fist", comment: "Ok", ranking: 3 },
+            { expansion: "Civil War", type: "Hero", name: "Falcon", comment: "Gillar ej Civil War", ranking: 3 },
+            { expansion: "Civil War", type: "Hero", name: "Hercules", comment: "Gillar ej Civil War", ranking: 3 },
+            { expansion: "Civil War", type: "Hero", name: "Luke Cage", comment: "Gillar ej Civil War", ranking: 3 },
+            { expansion: "Civil War", type: "Hero", name: "Patriot", comment: "Gillar ej Civil War", ranking: 3 },
+            { expansion: "Civil War", type: "Hero", name: "Peter Parker", comment: "Tråkig", ranking: 2 },
+            { expansion: "Civil War", type: "Hero", name: "Speedball", comment: "Gillar ej Civil War", ranking: 3 },
+            { expansion: "Civil War", type: "Hero", name: "Tigra", comment: "Gillar ej Civil War", ranking: 3 },
+            { expansion: "Civil War", type: "Hero", name: "Wiccan", comment: "Gillar ej Civil War", ranking: 3 },
+            { expansion: "Civil War", type: "Mastermind", name: "Maria Hill, Direktor of S.H.I.E.L.D.", comment: "Borde prova igen", ranking: 5 },
+            { expansion: "Civil War", type: "Mastermind", name: "Misty Knight", comment: "Tråkig", ranking: 2 },
+            { expansion: "Core set", type: "Mastermind", name: "Magneto", comment: "Lätt", ranking: 6 },
+            { expansion: "Core set", type: "Mastermind", name: "Red Skull", comment: "Lätt", ranking: 6 },
+            { expansion: "Core set", type: "Mastermind", name: "Loke", comment: "Ok", ranking: 6 },
+            { expansion: "Core set", type: "Mastermind", name: "Stryfe", comment: "Ok", ranking: 6 },
+            { expansion: "Core set", type: "Hero", name: "Hawkeye", comment: "Ok", ranking: 6 },
+            { expansion: "Core set", type: "Hero", name: "Nick Fury", comment: "Ok", ranking: 7 },
+            { expansion: "Core set", type: "Hero", name: "Black Widow", comment: "Ok", ranking: 6 },
+            { expansion: "Core set", type: "Hero", name: "Wolverine", comment: "Kul", ranking: 7 },
+            { expansion: "Core set", type: "Hero", name: "Storm", comment: "Ok", ranking: 5 },
+            { expansion: "Core set", type: "Hero", name: "Rogue", comment: "Ok", ranking: 5 },
+            { expansion: "Core set", type: "Hero", name: "Hulk", comment: "Ok", ranking: 6 },
+            { expansion: "Core set", type: "Hero", name: "Thor", comment: "Ok", ranking: 6 },
+            { expansion: "Core set", type: "Hero", name: "Deadpool", comment: "Trist", ranking: 4 },
+            { expansion: "Core set", type: "Hero", name: "Emma Frost", comment: "Ok", ranking: 6 },
+            { expansion: "Core set", type: "Hero", name: "Gambit", comment: "Trist", ranking: 4 },
+            { expansion: "Dark City", type: "Hero", name: "Angel", comment: "Jättebra", ranking: 9 },
+            { expansion: "Dark City", type: "Hero", name: "Bishop", comment: "Ok", ranking: 5 },
+            { expansion: "Dark City", type: "Hero", name: "Blade", comment: "Tråkig", ranking: 4 },
+            { expansion: "Dark City", type: "Hero", name: "Cable", comment: "Ok", ranking: 6 },
+            { expansion: "Dark City", type: "Hero", name: "Colossus", comment: "Trist", ranking: 4 },
+            { expansion: "Dark City", type: "Hero", name: "Daredevil", comment: "För mycket slump", ranking: 3 },
+            { expansion: "Dark City", type: "Hero", name: "Domino", comment: "Jättebra", ranking: 8 },
+            { expansion: "Dark City", type: "Hero", name: "Elektra", comment: "Trist", ranking: 3 },
+            { expansion: "Dark City", type: "Hero", name: "Forge", comment: "Trist", ranking: 4 },
+            { expansion: "Dark City", type: "Hero", name: "Ghost Rider", comment: "Dålig i början, kul senare", ranking: 6 },
+            { expansion: "Dark City", type: "Hero", name: "Iceman", comment: "Jättebra", ranking: 10 },
+            { expansion: "Dark City", type: "Hero", name: "Iron Fist", comment: "Ok", ranking: 7 },
+            { expansion: "Dark City", type: "Hero", name: "Jean Grey", comment: "Kul", ranking: 7 },
+            { expansion: "Dark City", type: "Hero", name: "Nightcrawler", comment: "Kul", ranking: 6 },
+            { expansion: "Dark City", type: "Hero", name: "Professor X", comment: "Trist", ranking: 5 },
+            { expansion: "Dark City", type: "Hero", name: "Punisher", comment: "Trist", ranking: 4 },
+            { expansion: "Dark City", type: "Mastermind", name: "Apocalypse", comment: "Omöjlig", ranking: 6 },
+            { expansion: "Dark City", type: "Mastermind", name: "Kingpin", comment: "Basic", ranking: 5 },
+            { expansion: "Dark City", type: "Mastermind", name: "Mephisto", comment: "Kul", ranking: 8 },
+            { expansion: "Dark City", type: "Mastermind", name: "Mr. Sinister", comment: "Lätt", ranking: 5 },
+            { expansion: "Dark City", type: "Mastermind", name: "Stryfe", comment: "Klen", ranking: 5 },
+            { expansion: "Deadpool", type: "Hero", name: "Deadpool", comment: "Kul", ranking: 7 },
+            { expansion: "Deadpool", type: "Hero", name: "Solo", comment: "Lite tråkig", ranking: 4 },
+            { expansion: "Deadpool", type: "Hero", name: "Stingray", comment: "Ok", ranking: 7 },
+            { expansion: "Deadpool", type: "Mastermind", name: "Macho Gomez", comment: "Kul", ranking: 8 },
+            { expansion: "Dimensions", type: "Hero", name: "Howard The Duck", comment: "Bra med Man-Thing", ranking: 7 },
+            { expansion: "Dimensions", type: "Hero", name: "Jessica Jones", comment: "Trist", ranking: 4 },
+            { expansion: "Dimensions", type: "Hero", name: "Man-Thing", comment: "Kul, tematisk", ranking: 7 },
+            { expansion: "Dimensions", type: "Mastermind", name: "J. Jonah Jameson", comment: "Ok", ranking: 6 },
+            { expansion: "Doctor Strange", type: "Hero", name: "The Ancient One", comment: "Bra", ranking: 6 },
+            { expansion: "Doctor Strange", type: "Hero", name: "Doctor Voodoo", comment: "Vet ej riktigt", ranking: 6 },
+            { expansion: "Doctor Strange", type: "Hero", name: "Doctor Strange", comment: "Ok", ranking: 6 },
+            { expansion: "Doctor Strange", type: "Mastermind", name: "Dark Phoenix", comment: "Ok", ranking: 6 },
+            { expansion: "Fantastic Four", type: "Hero", name: "Human Torch", comment: "Kul", ranking: 8 },
+            { expansion: "Fantastic Four", type: "Hero", name: "Invisible Woman", comment: "Bra", ranking: 8 },
+            { expansion: "Fantastic Four", type: "Hero", name: "Silver Surfer", comment: "Kul", ranking: 7 },
+            { expansion: "Fantastic Four", type: "Mastermind", name: "Galactus", comment: "Galet svår", ranking: 7 },
+            { expansion: "Fantastic Four", type: "Mastermind", name: "Mole Man", comment: "Kul", ranking: 7 },
+            { expansion: "Heroes of Asgard", type: "Hero", name: "Lady Sif", comment: "Bra", ranking: 7 },
+            { expansion: "Heroes of Asgard", type: "Hero", name: "The warriors three", comment: "Kul", ranking: 7 },
+            { expansion: "Heroes of Asgard", type: "Hero", name: "Thor", comment: "Kul", ranking: 7 },
+            { expansion: "Heroes of Asgard", type: "Hero", name: "Valkyrie", comment: "Ok", ranking: 6 },
+            { expansion: "Heroes of Asgard", type: "Mastermind", name: "Hela, Goddess of Death", comment: "Omöjlig", ranking: 3 },
+            { expansion: "Heroes of Asgard", type: "Mastermind", name: "Malekith the Accursed", comment: "Enkel", ranking: 6 },
+            { expansion: "Into the cosmos", type: "Hero", name: "Adam Warlock", comment: "Ok", ranking: 7 },
+            { expansion: "Into the cosmos", type: "Hero", name: "Captain Mar-vell", comment: "Ok. Ovant med Danger Sense", ranking: 7 },
+            { expansion: "Into the cosmos", type: "Hero", name: "Moondragon", comment: "Ok. Ovant med Danger Sense", ranking: 7 },
+            { expansion: "Into the cosmos", type: "Hero", name: "Nebula", comment: "Ok", ranking: 6 },
+            { expansion: "Into the cosmos", type: "Hero", name: "Nova", comment: "Kul", ranking: 7 },
+            { expansion: "Into the cosmos", type: "Hero", name: "Quasar", comment: "Hård", ranking: 8 },
+            { expansion: "Into the cosmos", type: "Hero", name: "Ronan the Accuser", comment: "Ok", ranking: 7 },
+            { expansion: "Into the cosmos", type: "Hero", name: "Yondu", comment: "Kul", ranking: 8 },
+            { expansion: "Into the cosmos", type: "Hero", name: "Phyla-Vell", comment: "Kul", ranking: 8 },
+            { expansion: "Into the cosmos", type: "Mastermind", name: "Magus", comment: "Lätt", ranking: 7 },
+            { expansion: "Into the cosmos", type: "Mastermind", name: "The Grandmaster", comment: "Kul", ranking: 8 },
+            { expansion: "Into the cosmos", type: "Mastermind", name: "The Beyonder", comment: "Kul men jättesvår", ranking: 9 },
+            { expansion: "Midnight Sons", type: "Hero", name: "Elsa Bloodstone", comment: "Ok", ranking: 6 },
+            { expansion: "Midnight Sons", type: "Hero", name: "Werewolf by Night", comment: "Kul, men jag gillar inte Moonlight", ranking: 7 },
+            { expansion: "Midnight Sons", type: "Hero", name: "Wong, Master of the Mystic Arts", comment: "Kul", ranking: 7 },
+            { expansion: "Midnight Sons", type: "Mastermind", name: "Lilith, Mother of Demons", comment: "Svår", ranking: 7 },
+            { expansion: "New Mutants", type: "Hero", name: "Karma", comment: "Vet ej riktigt", ranking: 5 },
+            { expansion: "New Mutants", type: "Hero", name: "Mirage", comment: "Vet ej riktigt", ranking: 5 },
+            { expansion: "New Mutants", type: "Hero", name: "Sunspot", comment: "Ok", ranking: 6 },
+            { expansion: "New Mutants", type: "Hero", name: "Warlock", comment: "Ok", ranking: 6 },
+            { expansion: "New Mutants", type: "Hero", name: "Wolfbane", comment: "Ok", ranking: 6 },
+            { expansion: "New Mutants", type: "Mastermind", name: "Belasco, Demon Lord of Limbo", comment: "Tråkig", ranking: 5 },
+            { expansion: "New Mutants", type: "Mastermind", name: "Emma Frost, The White Queen", comment: "Rörig. Meckig Master Strike", ranking: 3 },
+            { expansion: "Noir", type: "Hero", name: "Iron-man Noir", comment: "Kul", ranking: 7 },
+            { expansion: "Noir", type: "Hero", name: "Luke Cage noir", comment: "Ok", ranking: 7 },
+            { expansion: "Noir", type: "Hero", name: "Spider-Man noir", comment: "Tråkig", ranking: 5 },
+            { expansion: "Noir", type: "Mastermind", name: "The Goblin, Underworld boss", comment: "Kul", ranking: 7 },
+            { expansion: "Noir", type: "Hero", name: "Daredevil Noir", comment: "Ok", ranking: 7 },
+            { expansion: "Noir", type: "Mastermind", name: "Charles Xavier, Professor Of Crime", comment: "Kul", ranking: 8 },
+            { expansion: "Paint the town red", type: "Hero", name: "Black Cat", comment: "Kul", ranking: 7 },
+            { expansion: "Paint the town red", type: "Hero", name: "Moon Knight", comment: "Vet ej riktigt", ranking: 5 },
+            { expansion: "Paint the town red", type: "Hero", name: "Scarlet Spider", comment: "Ok", ranking: 6 },
+            { expansion: "Paint the town red", type: "Hero", name: "Spider Woman", comment: "Ok", ranking: 6 },
+            { expansion: "Paint the town red", type: "Hero", name: "Symbiote Spider-Man", comment: "Ok", ranking: 6 },
+            { expansion: "Paint the town red", type: "Mastermind", name: "Carnage", comment: "Ok", ranking: 5 },
+            { expansion: "Paint the town red", type: "Mastermind", name: "Mysterio", comment: "Ok", ranking: 6 },
+            { expansion: "Realm of Kings", type: "Hero", name: "Black Bolt", comment: "Trist", ranking: 4 },
+            { expansion: "Realm of Kings", type: "Hero", name: "Crystal", comment: "Svår, rörig", ranking: 7 },
+            { expansion: "Realm of Kings", type: "Hero", name: "Gorgon", comment: "Jättebra", ranking: 9 },
+            { expansion: "Realm of Kings", type: "Hero", name: "Karnak", comment: "Ok", ranking: 7 },
+            { expansion: "Realm of Kings", type: "Hero", name: "Medusa", comment: "Kul", ranking: 8 },
+            { expansion: "Realm of Kings", type: "Mastermind", name: "Emperor Vulcan of the Shi'ar", comment: "Lätt", ranking: 6 },
+            { expansion: "Realm of Kings", type: "Mastermind", name: "Maximus the Mad", comment: "Lagom med regler", ranking: 9 },
+            { expansion: "Revelations", type: "Hero", name: "Captain Marvel, Agent Of S.H.I.E.L.D", comment: "Inte så kul", ranking: 5 },
+            { expansion: "Revelations", type: "Hero", name: "Darkhawk", comment: "Kul", ranking: 8 },
+            { expansion: "Revelations", type: "Hero", name: "Hellcat", comment: "Kul", ranking: 9 },
+            { expansion: "Revelations", type: "Hero", name: "Photon", comment: "Jättebra", ranking: 9 },
+            { expansion: "Revelations", type: "Hero", name: "Quicksilver", comment: "Kul", ranking: 8 },
+            { expansion: "Revelations", type: "Hero", name: "Ronin", comment: "Kul", ranking: 7 },
+            { expansion: "Revelations", type: "Hero", name: "Scarlet Witch", comment: "Svår, vill prova igen", ranking: 6 },
+            { expansion: "Revelations", type: "Hero", name: "Speed", comment: "Kul", ranking: 9 },
+            { expansion: "Revelations", type: "Hero", name: "War Machine", comment: "Ok", ranking: 6 },
+            { expansion: "Revelations", type: "Mastermind", name: "Grim Reaper", comment: "Svår", ranking: 7 },
+            { expansion: "Revelations", type: "Mastermind", name: "Mandarin", comment: "Lätt om man har tur med Villaindeck", ranking: 6 },
+            { expansion: "Revelations", type: "Mastermind", name: "The Hood", comment: "Verkar lätt", ranking: 6 },
+            { expansion: "S.H.I.E.L.D.S.", type: "Hero", name: "Agent Phil Couison", comment: "Tråkig", ranking: 5 },
+            { expansion: "S.H.I.E.L.D.S.", type: "Hero", name: "Deathlok", comment: "Jättebra", ranking: 9 },
+            { expansion: "S.H.I.E.L.D.S.", type: "Hero", name: "Mockingbird", comment: "Tråkig", ranking: 5 },
+            { expansion: "S.H.I.E.L.D.S.", type: "Hero", name: "Quake", comment: "Jättebra", ranking: 9 },
+            { expansion: "S.H.I.E.L.D.S.", type: "Mastermind", name: "Hydra Super-Adaptoid", comment: "Jättebra", ranking: 9 },
+            { expansion: "Secret Wars 2", type: "Hero", name: "Beast", comment: "Kul", ranking: 8 },
+            { expansion: "Secret Wars 2", type: "Hero", name: "Agent Venom", comment: "Dålig", ranking: 5 },
+            { expansion: "Secret Wars 2", type: "Hero", name: "Arkon The Magnificent", comment: "Kul", ranking: 8 },
+            { expansion: "Secret Wars 2", type: "Mastermind", name: "Immortal Emperor Zheng Zhu", comment: "Lätt", ranking: 7 },
+            { expansion: "Secret Wars vol1", type: "Hero", name: "Black Bolt", comment: "Ok", ranking: 5 },
+            { expansion: "Secret Wars vol1", type: "Hero", name: "Black Panther", comment: "Kul", ranking: 7 },
+            { expansion: "Secret Wars vol1", type: "Hero", name: "Captain Marvel", comment: "Bra", ranking: 7 },
+            { expansion: "Secret Wars vol1", type: "Hero", name: "Dr. Strange", comment: "Kul", ranking: 7 },
+            { expansion: "Secret Wars vol1", type: "Hero", name: "Lady Thor", comment: "Kul", ranking: 8 },
+            { expansion: "Secret Wars vol1", type: "Hero", name: "Maximus", comment: "Kul", ranking: 8 },
+            { expansion: "Secret Wars vol1", type: "Hero", name: "Namor, The Sub-Mariner", comment: "Ok, bra för solospel", ranking: 7 },
+            { expansion: "Secret Wars vol1", type: "Hero", name: "Superior Iron Man", comment: "Kul, rarekortet inte kul för solospel", ranking: 7 },
+            { expansion: "Secret Wars vol1", type: "Hero", name: "Thanos", comment: "Bara bra om man har Bystanders", ranking: 6 },
+            { expansion: "Secret Wars vol1", type: "Hero", name: "Ultimate Spider-man", comment: "Kul, rarekortet inte bra om man inte fokuserar på spiderman", ranking: 8 },
+            { expansion: "Secret Wars vol1", type: "Mastermind", name: "Madelyne Pryor", comment: "Svår men kul", ranking: 7 },
+            { expansion: "Secret Wars vol1", type: "Mastermind", name: "Nimrod, Super Sentinel", comment: "Lätt", ranking: 5 },
+            { expansion: "Secret Wars vol1", type: "Mastermind", name: "Wasteland Hulk", comment: "Bra", ranking: 8 },
+            { expansion: "Secret Wars vol1", type: "Mastermind", name: "Zombie Green Goblin", comment: "Jättekul", ranking: 8 },
+            { expansion: "Secret Wars vol2", type: "Hero", name: "Proxima Midnight", comment: "Ok", ranking: 6 },
+            { expansion: "Venom", type: "Hero", name: "Carnage", comment: "Jättebra", ranking: 8 },
+            { expansion: "Venom", type: "Hero", name: "Venom", comment: "Ok", ranking: 7 },
+            { expansion: "Venom", type: "Hero", name: "Venomized Dr. Strange", comment: "Kul", ranking: 8 },
+            { expansion: "Venom", type: "Hero", name: "Venompool", comment: "Tråkig", ranking: 4 },
+            { expansion: "Venom", type: "Mastermind", name: "Hybrid", comment: "Ok", ranking: 6 },
+            { expansion: "Venom", type: "Mastermind", name: "Poison Thanos", comment: "Jättesvår", ranking: 7 },
+            { expansion: "Venom", type: "Villain", name: "Life Foundation", comment: "Ok", ranking: 6 },
+            { expansion: "Venom", type: "Villain", name: "Poison", comment: "Ej tematiska", ranking: 4 },
+            { expansion: "World war Hulk", type: "Hero", name: "Bruce Banner", comment: "Kul", ranking: 6 },
+            { expansion: "World war Hulk", type: "Hero", name: "Amadeus Cho", comment: "Rätt tråkig", ranking: 5 },
+            { expansion: "World war Hulk", type: "Hero", name: "Joe Fixit, Grey Hulk", comment: "Ok", ranking: 7 },
+            { expansion: "World war Hulk", type: "Hero", name: "Namora", comment: "Ok", ranking: 7 },
+            { expansion: "World war Hulk", type: "Hero", name: "Gladiator Hulk", comment: "Jättebra", ranking: 9 },
+            { expansion: "World war Hulk", type: "Hero", name: "Korg", comment: "Jättebra", ranking: 9 },
+            { expansion: "World war Hulk", type: "Hero", name: "Miek the Unhived", comment: "Kul", ranking: 8 },
+            { expansion: "World war Hulk", type: "Hero", name: "Rick Jones", comment: "Kul", ranking: 6 },
+            { expansion: "World war Hulk", type: "Hero", name: "She-Hulk", comment: "Kul", ranking: 6 },
+            { expansion: "World war Hulk", type: "Mastermind", name: "General \"Thunderbolt\" Ross", comment: "Kul", ranking: 8 },
+            { expansion: "World war Hulk", type: "Mastermind", name: "King Hulk", comment: "Enkel", ranking: 5 },
+            { expansion: "World war Hulk", type: "Mastermind", name: "Illuminati, Secret Society", comment: "Ok", ranking: 6 },
+            { expansion: "World war Hulk", type: "Mastermind", name: "M.O.D.O.K.", comment: "Jättebra", ranking: 9 },
+            { expansion: "World war Hulk", type: "Mastermind", name: "The Red King", comment: "Jättebra", ranking: 9 },
+            { expansion: "World war Hulk", type: "Mastermind", name: "The Sentry", comment: "Jättebra", ranking: 7 },
+            { expansion: "X-Men", type: "Hero", name: "Beast", comment: "Kul", ranking: 6 },
+            { expansion: "X-Men", type: "Hero", name: "Cannonball", comment: "Ok", ranking: 6 },
+            { expansion: "X-Men", type: "Hero", name: "Colossus & Wolverine", comment: "Kul", ranking: 8 },
+            { expansion: "X-Men", type: "Hero", name: "Longshot", comment: "Kul", ranking: 5 },
+            { expansion: "X-Men", type: "Hero", name: "X-23", comment: "Kul", ranking: 6 },
+            { expansion: "X-Men", type: "Hero", name: "Dazzler", comment: "Jättebra", ranking: 8 },
+            { expansion: "X-Men", type: "Hero", name: "Jubilee", comment: "Jättebra", ranking: 8 },
+            { expansion: "X-Men", type: "Hero", name: "Psylocke", comment: "Jättekul", ranking: 8 },
+            { expansion: "X-Men", type: "Mastermind", name: "Deathbird", comment: "Kul", ranking: 8 },
+            { expansion: "X-Men", type: "Mastermind", name: "MOJO", comment: "Jättekul", ranking: 7 },
+            { expansion: "X-Men", type: "Mastermind", name: "Dark Phoenix", comment: "Supersvår men kul", ranking: 8 },
+            // Schemes
+            { expansion: "Annihilation", type: "Scheme", name: "Put Humanity on Trial", comment: "Kul", ranking: 7 },
+            { expansion: "Annihilation", type: "Scheme", name: "Sneak Attack the Heroes Homes", comment: "Kul", ranking: 7 },
+            { expansion: "Ant-Man", type: "Scheme", name: "Trap Heroes in the Microverse", comment: "Riktigt bra", ranking: 8 },
+            { expansion: "Black Panther", type: "Scheme", name: "Seize the Wakanda Throne", comment: "Ok", ranking: 7 },
+            { expansion: "Black Panther", type: "Scheme", name: "Plunder Wakanda's Vibranium", comment: "Rörig men kul när man fattar", ranking: 7 },
+            { expansion: "Black Widow", type: "Scheme", name: "Frame Heroes for Murder", comment: "Konstig", ranking: 5 },
+            { expansion: "Black Widow", type: "Scheme", name: "Corrupt the Spy Agencies", comment: "Kul", ranking: 7 },
+            { expansion: "Black Widow", type: "Scheme", name: "Sniper Rifle Assassins", comment: "", ranking: 7 },
+            { expansion: "Captain America", type: "Scheme", name: "Go back in time to slay heroe's ancestors", comment: "Ok", ranking: 6 },
+            { expansion: "Captain America", type: "Scheme", name: "The Unbreakable Enigma Code", comment: "Lätt, memory", ranking: 5 },
+            { expansion: "Captain America", type: "Scheme", name: "Brainwash The Military", comment: "Kul", ranking: 7 },
+            { expansion: "Captain America", type: "Scheme", name: "Change the outcome of WWII", comment: "Kul", ranking: 7 },
+            { expansion: "Champions", type: "Scheme", name: "Steal all oxygen on earth", comment: "Ok", ranking: 7 },
+            { expansion: "Civil War", type: "Scheme", name: "Dark Reign of H.A.M.M.E.R. Officers", comment: "Klurig", ranking: 6 },
+            { expansion: "Civil War", type: "Scheme", name: "Reveal Heroe's Secret Identity", comment: "Hopplös, tråkig", ranking: 3 },
+            { expansion: "Core set", type: "Scheme", name: "Midtown Bank Robbery", comment: "Lätt", ranking: 6 },
+            { expansion: "Core set", type: "Scheme", name: "Unleash the power of Cosmic Cube", comment: "Kul och lätt", ranking: 7 },
+            { expansion: "Core set", type: "Scheme", name: "Portal to the Dark Dimension", comment: "Kul", ranking: 7 },
+            { expansion: "Dark City", type: "Scheme", name: "Capture baby hope", comment: "Kul", ranking: 7 },
+            { expansion: "Dark City", type: "Scheme", name: "Detonate the Helicarrier", comment: "Kul", ranking: 7 },
+            { expansion: "Dark City", type: "Scheme", name: "Massive earthquake generator", comment: "Omöjlig med Apocalypse", ranking: 6 },
+            { expansion: "Dark City", type: "Scheme", name: "Organized Crime Wave", comment: "Tråkig", ranking: 4 },
+            { expansion: "Dark City", type: "Scheme", name: "Steal the Weaponized Plutonium", comment: "Riktigt kul", ranking: 9 },
+            { expansion: "Dark City", type: "Scheme", name: "Transform citizens into demons", comment: "Lätt", ranking: 5 },
+            { expansion: "Dark City", type: "Scheme", name: "X-cutioner's song", comment: "Kul", ranking: 7 },
+            { expansion: "Deadpool", type: "Scheme", name: "Deadpool Kills the Marvel Universe", comment: "Nja", ranking: 6 },
+            { expansion: "Doctor Strange", type: "Scheme", name: "The Dark Phoenix Saga", comment: "Slump", ranking: 6 },
+            { expansion: "Fantastic Four", type: "Scheme", name: "Flood the Planet with Melted Glaciers", comment: "Kul", ranking: 8 },
+            { expansion: "Fantastic Four", type: "Scheme", name: "Invincible Force Field", comment: "Kul", ranking: 6 },
+            { expansion: "Fantastic Four", type: "Scheme", name: "Pull Reality Into the Negative Zone", comment: "Nja", ranking: 5 },
+            { expansion: "Heroes of Asgard", type: "Scheme", name: "Ragnarok, Twilight of the Gods", comment: "Skitsvår", ranking: 3 },
+            { expansion: "Heroes of Asgard", type: "Scheme", name: "The Dark World of Svartalfheim", comment: "Kul", ranking: 6 },
+            { expansion: "Into the cosmos", type: "Scheme", name: "Annihilation: Conquest", comment: "Kul, svår", ranking: 7 },
+            { expansion: "Into the cosmos", type: "Scheme", name: "The contest of champions", comment: "Lite rörig men jättekul", ranking: 8 },
+            { expansion: "Into the cosmos", type: "Scheme", name: "Turn the soul of Adam Warlock", comment: "Lätt men kul", ranking: 7 },
+            { expansion: "Into the cosmos", type: "Scheme", name: "Destroy The Nova Corp", comment: "Jättekul", ranking: 8 },
+            { expansion: "Midnight Sons", type: "Scheme", name: "Ritual Sacrifice To Summon Chthon", comment: "Vet ej riktigt", ranking: 6 },
+            { expansion: "New Mutants", type: "Scheme", name: "The Demon Bear Saga", comment: "Omöjlig. Slump", ranking: 3 },
+            { expansion: "New Mutants", type: "Scheme", name: "Trapped in the insane asylum", comment: "Rörig", ranking: 3 },
+            { expansion: "Noir", type: "Scheme", name: "Find the split personality killer", comment: "Riktigt bra. Men bättre på fler spelare", ranking: 8 },
+            { expansion: "Noir", type: "Scheme", name: "Silence The Witnesses", comment: "Riktigt kul", ranking: 8 },
+            { expansion: "Paint the town red", type: "Scheme", name: "Invade the daily Bugle News HQ", comment: "Rörig men kul när man fattar", ranking: 6 },
+            { expansion: "Paint the town red", type: "Scheme", name: "Splice Humans with Spider DNA", comment: "Ok", ranking: 6 },
+            { expansion: "Realm of Kings", type: "Scheme", name: "Devolve with Xerogen Crystals", comment: "Fantastisk", ranking: 9 },
+            { expansion: "Realm of Kings", type: "Scheme", name: "Ruin the Perfect Wedding", comment: "Trist", ranking: 6 },
+            { expansion: "Realm of Kings", type: "Scheme", name: "Tornado of Terrigen Mists", comment: "Jättekul", ranking: 8 },
+            { expansion: "Revelations", type: "Scheme", name: "Open Hydra Revolution", comment: "Jättekul", ranking: 9 },
+            { expansion: "Revelations", type: "Scheme", name: "The Kovac Saga", comment: "Ok", ranking: 7 },
+            { expansion: "Revelations", type: "Scheme", name: "Tsunami crushes the coast", comment: "Kul", ranking: 7 },
+            { expansion: "S.H.I.E.L.D.S.", type: "Scheme", name: "S.H.I.E.L.D.S. vs Hydra", comment: "Jättebra", ranking: 9 },
+            { expansion: "Secret Wars 2", type: "Scheme", name: "Deadlands Hordes Charge The Wall", comment: "Lätt kul", ranking: 8 },
+            { expansion: "Secret Wars vol1", type: "Scheme", name: "Build an army of Annihilation", comment: "Svår med jättekul", ranking: 8 },
+            { expansion: "Secret Wars vol1", type: "Scheme", name: "Dark Alliance", comment: "Jättebra", ranking: 9 },
+            { expansion: "Secret Wars vol1", type: "Scheme", name: "Master of Tyrants", comment: "Lätt", ranking: 7 },
+            { expansion: "Secret Wars vol2", type: "Scheme", name: "Pan-Dimensional Plague", comment: "Kul", ranking: 8 },
+            { expansion: "Venom", type: "Scheme", name: "Maximum Carnage", comment: "Jättesvår med Poison Thanos", ranking: 7 },
+            { expansion: "Venom", type: "Scheme", name: "Paralyzing Venom", comment: "Enkel", ranking: 6 },
+            { expansion: "Venom", type: "Scheme", name: "Symbiotic Absorption", comment: "Kul", ranking: 7 },
+            { expansion: "World war Hulk", type: "Scheme", name: "Subjugate with obedience disks", comment: "Jättebra", ranking: 9 },
+            { expansion: "World war Hulk", type: "Scheme", name: "Mutating Gamma Rays", comment: "Kul", ranking: 7 },
+            { expansion: "World war Hulk", type: "Scheme", name: "World War Hulk", comment: "Hopplös", ranking: 8 },
+            { expansion: "X-Men", type: "Scheme", name: "Alien Brood Encounter", comment: "Kul", ranking: 8 },
+            { expansion: "X-Men", type: "Scheme", name: "Anti-Mutant Hatred", comment: "Jättekul", ranking: 7 },
+            { expansion: "X-Men", type: "Scheme", name: "The Dark Phoenix Saga", comment: "Supersvår men kul", ranking: 8 }
+        ];
+
+        const gameData = [
+            { expansion: "Annihilation", name: "Put Humanity on Trial", comment: "Kul", ranking: 7, victoryPile: 36, bystanders: 0, bystanderPenalty: 0, twists: 10, twistPenalty: -30, escaped: 0, escapePenalty: 0, sum: 6, heroes: "Kang the Conqueror, PSI-Lord, Fantastic Four United, Brainstorm", result: "Vann" },
+            { expansion: "Annihilation", name: "Sneak Attack the Heroes Homes", comment: "Kul", ranking: 7, victoryPile: 28, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 13, heroes: "Annihilus, Heralds of Galactus, Fantastic Four United, Super-Skrull", result: "Förlorade. Jätteroligt, måste köras igen" },
+            { expansion: "Ant-Man", name: "Trap Heroes in the Microverse", comment: "Riktigt bra", ranking: 8, victoryPile: 31, bystanders: 0, bystanderPenalty: 0, twists: 1, twistPenalty: -3, escaped: 0, escapePenalty: 0, sum: 28, heroes: "Ultron, Jocasta, Ant-Man, WASP", result: "Vann på typ 5 rundan" },
+            { expansion: "Black Panther", name: "Seize the Wakanda Throne", comment: "Ok", ranking: 7, victoryPile: 23, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 8, heroes: "King Black Panther, Princess Shuri, Queen Storm of Wakanda", result: "Förlorade" },
+            { expansion: "Black Panther", name: "Plunder Wakanda's Vibranium", comment: "Rörig men kul när man fattar", ranking: 7, victoryPile: 53, bystanders: 0, bystanderPenalty: 0, twists: 8, twistPenalty: -24, escaped: 1, escapePenalty: -1, sum: 28, heroes: "King Black Panther, Princess Shuri, Queen Storm of Wakanda", result: "Förlorade" },
+            { expansion: "Black Widow", name: "Frame Heroes for Murder", comment: "Konstig", ranking: 5, victoryPile: 23, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 8, heroes: "Spiderman, Black Widow, Red Guardian, White Tiger, Yelena Belova, Falcon & Winter Soldie", result: "Förlorade på ett tråkigt sätt" },
+            { expansion: "Black Widow", name: "Corrupt the Spy Agencies", comment: "Kul", ranking: 7, victoryPile: 31, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: 13, heroes: "Yelanda Belova, White Tiger, Red Guardian", result: "Förlorade" },
+            { expansion: "Black Widow", name: "Sniper Rifle Assassins", comment: "", ranking: 7, victoryPile: 33, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 12, heroes: "Red Guardian, White Tiger, Yelena Belova", result: "" },
+            { expansion: "Captain America", name: "Go back in time to slay heroe's ancestors", comment: "Ok", ranking: 6, victoryPile: 40, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: 22, heroes: "Arnim Zola, Ant-Man, Steve Rogers, director of S.H.I.E.L.D., Black Knight, Jocasta, Winter Soldier, Captain America 1941, Captain America Falcon, Agent x-13", result: "Vann" },
+            { expansion: "Captain America", name: "The Unbreakable Enigma Code", comment: "Lätt, memory", ranking: 5, victoryPile: 54, bystanders: 0, bystanderPenalty: 0, twists: 4, twistPenalty: -12, escaped: 0, escapePenalty: 0, sum: 42, heroes: "Baron Heinrich Zemo, Winter Soldier, Captain America 1941, Captain America Falcon", result: "Vann" },
+            { expansion: "Captain America", name: "Brianwash The Military", comment: "Kul", ranking: 7, victoryPile: 9, bystanders: 0, bystanderPenalty: 0, twists: 3, twistPenalty: -9, escaped: 0, escapePenalty: 0, sum: 0, heroes: "Howard the Duck, Man-Thing, Jessica Jones", result: "Vann" },
+            { expansion: "Captain America", name: "Change the outcome of WWII", comment: "Kul", ranking: 7, victoryPile: 73, bystanders: 1, bystanderPenalty: -4, twists: 7, twistPenalty: -21, escaped: 3, escapePenalty: -3, sum: 45, heroes: "Arnim Zola, Captain America, Steve Roger, Director of S.H.I.E.L.D, Agent x-13", result: "Vann" },
+            { expansion: "Champions", name: "Steal all oxygen on earth", comment: "Ok", ranking: 7, victoryPile: 36, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 15, heroes: "Pagliacci. Viv Vision, Nova, Ms. Marvel", result: "Förlorade" },
+            { expansion: "Civil War", name: "Dark Reign of H.A.M.M.E.R. Officers", comment: "Klurig", ranking: 6, victoryPile: 0, bystanders: 0, bystanderPenalty: 0, twists: 4, twistPenalty: -12, escaped: 0, escapePenalty: 0, sum: -12, heroes: "", result: "Förlorade" },
+            { expansion: "Civil War", name: "Reveal Heroe's Secet Identity", comment: "Hopplös, tråkig", ranking: 3, victoryPile: 6, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: -9, heroes: "", result: "Förlorade" },
+            { expansion: "Core set", name: "Midtown Bank Robbery", comment: "Lätt", ranking: 6, victoryPile: 38, bystanders: 0, bystanderPenalty: 0, twists: 4, twistPenalty: -12, escaped: 0, escapePenalty: 0, sum: 26, heroes: "Re Skull, Hawkeye, Black Widow, Nick Fury", result: "Lättaste någonsin" },
+            { expansion: "Core set", name: "Unleash the power of Cosmic Cube", comment: "Kul och lätt", ranking: 7, victoryPile: 49, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: 31, heroes: "Psychic Torment. Black Widow, Colossus, Domino", result: "Vann lätt, spelade Wolverine" },
+            { expansion: "Core set", name: "Portal to the Dark Dimension", comment: "Kul", ranking: 7, victoryPile: 34, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: 16, heroes: "Loke. Hulk, Thor, Deadpool", result: "Vann med två kort kvar" },
+            { expansion: "Dark City", name: "Capture baby hope", comment: "Kul", ranking: 7, victoryPile: 0, bystanders: 0, bystanderPenalty: 0, twists: 0, twistPenalty: 0, escaped: 0, escapePenalty: 0, sum: 0, heroes: "", result: "" },
+            { expansion: "Dark City", name: "Detonate the Helicarrier", comment: "Kul", ranking: 7, victoryPile: 72, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 57, heroes: "Mr. Sinister med Angel, Gambit, Jean Grey, Emma Frost, Professor X, Iceman", result: "Vann" },
+            { expansion: "Dark City", name: "Massive earthquake generatot", comment: "Omöjlig med Apocalypse", ranking: 6, victoryPile: 36, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 15, heroes: "Apocalypse, Angel, Iron Fist,Iceman", result: "Förlorade" },
+            { expansion: "Dark City", name: "Organized Crime Wave", comment: "Tråkig", ranking: 4, victoryPile: 0, bystanders: 0, bystanderPenalty: 0, twists: 0, twistPenalty: 0, escaped: 0, escapePenalty: 0, sum: 0, heroes: "", result: "" },
+            { expansion: "Dark City", name: "Steal the Weaponized Plutonium", comment: "Riktigt kul", ranking: 9, victoryPile: 48, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 2, escapePenalty: -2, sum: 31, heroes: "Kingpin med Elektra, Bishop och Blade", result: "Vann" },
+            { expansion: "Dark City", name: "Transform citizens inte demons", comment: "Lätt", ranking: 5, victoryPile: 77, bystanders: 0, bystanderPenalty: 0, twists: 2, twistPenalty: -6, escaped: 0, escapePenalty: 0, sum: 71, heroes: "Mr Sinister, Angel, Wolverine, Elektra", result: "" },
+            { expansion: "Dark City", name: "X-cutioner's song", comment: "Kul", ranking: 7, victoryPile: 38, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 23, heroes: "Mephisto, Iron Fist, Blade, Ghost Rider, (Bishop)", result: "" },
+            { expansion: "Deadpool", name: "Deadpool Kills the Marvel Universe", comment: "Nja", ranking: 6, victoryPile: 30, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 1, escapePenalty: -1, sum: 11, heroes: "Solo, Deadpool, Stingray", result: "Förlorade" },
+            { expansion: "Doctor Strange", name: "The Dark Phoenix Saga", comment: "Slump", ranking: 6, victoryPile: 34, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 13, heroes: "Doctor Strange, Doctor Voodoo, The Ancient One", result: "Vann med 5 kort kvar i Villain Deck" },
+            { expansion: "Fantastic Four", name: "Flood the Planet with Melted Glaciers", comment: "Kul", ranking: 8, victoryPile: 46, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 3, escapePenalty: -3, sum: 22, heroes: "Galactus med Human Torch, Invisible Woman och Silver Surfer", result: "Vann" },
+            { expansion: "Fantastic Four", name: "Invincible Force Field", comment: "Kul", ranking: 6, victoryPile: 44, bystanders: 2, bystanderPenalty: -8, twists: 5, twistPenalty: -15, escaped: 3, escapePenalty: -3, sum: 18, heroes: "Mole Man med Human Torch, Invisible Woman och Silver Surfer", result: "Vann med två kort kvar" },
+            { expansion: "Fantastic Four", name: "Pull Reality Into the Negative Zone", comment: "Nja", ranking: 5, victoryPile: 19, bystanders: 1, bystanderPenalty: -4, twists: 7, twistPenalty: -21, escaped: 4, escapePenalty: -4, sum: -10, heroes: "Galactus med Human Torch, Invisible Woman och Silver Surfer", result: "Förlorade" },
+            { expansion: "Heroes of Asgard", name: "Ragnarok, Twigight of the Gods", comment: "Skitsvår", ranking: 3, victoryPile: 28, bystanders: 0, bystanderPenalty: 0, twists: 10, twistPenalty: -30, escaped: 2, escapePenalty: -2, sum: -4, heroes: "Hela", result: "Förlorade" },
+            { expansion: "Heroes of Asgard", name: "The Dark World of Svartalfheim", comment: "Kul", ranking: 6, victoryPile: 25, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: 7, heroes: "Malakith", result: "Vann" },
+            { expansion: "Into the cosmos", name: "Annilhilation: Conquest", comment: "Kul, svår", ranking: 7, victoryPile: 58, bystanders: 0, bystanderPenalty: 0, twists: 9, twistPenalty: -27, escaped: 0, escapePenalty: 0, sum: 31, heroes: "The Grandmaster med Captian Mar-vell, Nebula, Ronan the Accuser och Moondragon", result: "Vann" },
+            { expansion: "Into the cosmos", name: "The contest of champions", comment: "Lite rörig men jättekul", ranking: 8, victoryPile: 49, bystanders: 0, bystanderPenalty: 0, twists: 9, twistPenalty: -27, escaped: 0, escapePenalty: 0, sum: 22, heroes: "", result: "Vann med två kort kvar i Villain deck" },
+            { expansion: "Into the cosmos", name: "Turn the soul of Adam Warlock", comment: "Lätt men kul", ranking: 7, victoryPile: 43, bystanders: 0, bystanderPenalty: 0, twists: 10, twistPenalty: -30, escaped: 0, escapePenalty: 0, sum: 13, heroes: "", result: "Vann för lätt" },
+            { expansion: "Into the cosmos", name: "Destroy The Nova Corp", comment: "Jättekul", ranking: 8, victoryPile: 38, bystanders: 0, bystanderPenalty: 0, twists: 9, twistPenalty: -27, escaped: 0, escapePenalty: 0, sum: 11, heroes: "The Beyonder, Phyla-Yell, Yondu, Nova, Nebula, Moondragon", result: "Förlorade" },
+            { expansion: "Midnight Sons", name: "Ritual Sacrifice To Summon Chthon", comment: "Vet ej riktigt", ranking: 6, victoryPile: 37, bystanders: 0, bystanderPenalty: 0, twists: 0, twistPenalty: 0, escaped: 0, escapePenalty: 0, sum: 37, heroes: "Lilith, Werewolf by Night, Wong, Master of the Mystic Arts, Elsa Bloodstone", result: "Förlorade tråkigt" },
+            { expansion: "New Mutants", name: "The Demon Bear Saga", comment: "Omöjlig. Slump", ranking: 3, victoryPile: 0, bystanders: 0, bystanderPenalty: 0, twists: 8, twistPenalty: -24, escaped: 0, escapePenalty: 0, sum: -24, heroes: "", result: "Förlorade direkt" },
+            { expansion: "New Mutants", name: "Trapped in the insane asylum", comment: "Rörig", ranking: 3, victoryPile: 33, bystanders: 0, bystanderPenalty: 0, twists: 3, twistPenalty: -9, escaped: 0, escapePenalty: 0, sum: 24, heroes: "", result: "Förlorade" },
+            { expansion: "Noir", name: "Find the split personality killer", comment: "Riktigt bra. Men bättre på fler spelare", ranking: 8, victoryPile: 19, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 4, heroes: "The Gobiln, Underworld boss, Spider-man noir, Luca Cage noir, Iron-man noir", result: "Vann" },
+            { expansion: "Noir", name: "Silence The Witnesses", comment: "Riktigt kul", ranking: 8, victoryPile: 59, bystanders: 3, bystanderPenalty: -12, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: 29, heroes: "Charles Xavier, Professor Of Crime, Iron Man Noir, Spider-man Noir, Daredevil Noir", result: "Vann" },
+            { expansion: "Paint the town red", name: "Invade the daily Bugle News HQ", comment: "Rörig men kul när man fattar", ranking: 6, victoryPile: 56, bystanders: 0, bystanderPenalty: 0, twists: 8, twistPenalty: -24, escaped: 0, escapePenalty: 0, sum: 32, heroes: "Carnage, Symbiote Spider-Man, Moon Knight, Black Cat", result: "Vann med 10 kort på hand, 3 kort kvar i Villain Deck" },
+            { expansion: "Paint the town red", name: "Splice Humans with Spider DNA", comment: "Ok", ranking: 6, victoryPile: 26, bystanders: 3, bystanderPenalty: -12, twists: 8, twistPenalty: -24, escaped: 4, escapePenalty: -4, sum: -14, heroes: "Mysterio med Spider Woman, Scarlet Spider och Moon Knight", result: "Förlorade på sista kortet" },
+            { expansion: "Realm of Kings", name: "Devolve with Xerogen Crystals", comment: "Fantastisk", ranking: 9, victoryPile: 58, bystanders: 0, bystanderPenalty: 0, twists: 4, twistPenalty: -12, escaped: 0, escapePenalty: 0, sum: 46, heroes: "", result: "Vann med ett kort kvar i Villain deck" },
+            { expansion: "Realm of Kings", name: "Ruin the Perfect Wedding", comment: "Trist", ranking: 6, victoryPile: 50, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 29, heroes: "Maximus the Mad, Crystal, Medusa, Gorgon (Karnak and Black Bolt in wedding)", result: "Vann lätt" },
+            { expansion: "Realm of Kings", name: "Tornado of Terrigen Mists", comment: "Jättekul", ranking: 8, victoryPile: 47, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 26, heroes: "Emperor Vulcan of the Shi'ar, Medusa, Black Bolt, Karnak", result: "Vann lätt" },
+            { expansion: "Revelations", name: "Open Hydra Revolution", comment: "Jättekul", ranking: 9, victoryPile: 29, bystanders: 0, bystanderPenalty: 0, twists: 4, twistPenalty: -12, escaped: 0, escapePenalty: 0, sum: 17, heroes: "Grim Reaper med Hellcat, Speed och Photon", result: "Vann" },
+            { expansion: "Revelations", name: "The Kovac Saga", comment: "Ok", ranking: 7, victoryPile: 19, bystanders: 0, bystanderPenalty: 0, twists: 8, twistPenalty: -24, escaped: 0, escapePenalty: 0, sum: -5, heroes: "", result: "Förlorade" },
+            { expansion: "Revelations", name: "Tsunami crushes the coast", comment: "Kul", ranking: 7, victoryPile: 38, bystanders: 0, bystanderPenalty: 0, twists: 0, twistPenalty: 0, escaped: 0, escapePenalty: 0, sum: 38, heroes: "Mandarin, Speed, Quicksilver, Darkhawk", result: "Vann lite för lätt" },
+            { expansion: "S.H.I.E.L.D.S.", name: "S.H.I.E.L.D.S. vs Hydra", comment: "Jättebra", ranking: 9, victoryPile: 42, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 8, escapePenalty: -8, sum: 13, heroes: "Hydra Super-Adaptoid, Quake, Deathlok, Mockingbird", result: "Slut i Villain deck" },
+            { expansion: "Secret Wars 2", name: "Deadlands Hordes Charge The Wall", comment: "Lätt kul", ranking: 8, victoryPile: 26, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 4, escapePenalty: -4, sum: 1, heroes: "Immortal Emperor Zheng Zhu, Best, Agent Venom, Arkon The Magnificent", result: "Vann lätt" },
+            { expansion: "Secret Wars vol1", name: "Build an army of Annihilation", comment: "Svår med jättekul", ranking: 8, victoryPile: 45, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: 27, heroes: "Madelyn Pryor, Ultimate Sprider-man, Lady Thor, Captain Marvel", result: "Vann" },
+            { expansion: "Secret Wars vol1", name: "Dark Alliance", comment: "Jättebra", ranking: 9, victoryPile: 35, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 14, heroes: "", result: "Förlorade" },
+            { expansion: "Secret Wars vol1", name: "Master of Tyrants", comment: "Lätt", ranking: 7, victoryPile: 41, bystanders: 0, bystanderPenalty: 0, twists: 1, twistPenalty: -3, escaped: 0, escapePenalty: 0, sum: 38, heroes: "", result: "Vann för lätt" },
+            { expansion: "Secret Wars vol2", name: "Pan-Dimentional Plague", comment: "Kul", ranking: 8, victoryPile: 35, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 14, heroes: "Nimrod, Super Sentinel, Maximus, Namor, The Sub-Marine, Proxima Midnight", result: "Vann ganska lätt" },
+            { expansion: "Venom", name: "Maximum Carnage", comment: "Jättesvår med Poison Thanos", ranking: 7, victoryPile: 21, bystanders: 0, bystanderPenalty: 0, twists: 10, twistPenalty: -30, escaped: 0, escapePenalty: 0, sum: -9, heroes: "", result: "Förlorade fyra gånger" },
+            { expansion: "Venom", name: "Paralyzing Venom", comment: "Enkel", ranking: 6, victoryPile: 8, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: -10, heroes: "Venomized Dr. Strange, Carnage, Venompool", result: "Förlorade" },
+            { expansion: "Venom", name: "Symbiotic Absorption", comment: "Kul", ranking: 7, victoryPile: 74, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 59, heroes: "Venomized Dr. Strange, Venom, Carnage", result: "Vann" },
+            { expansion: "World war Hulk", name: "Subjugate with obedience disks", comment: "Jättebra", ranking: 9, victoryPile: 42, bystanders: 0, bystanderPenalty: 0, twists: 8, twistPenalty: -24, escaped: 0, escapePenalty: 0, sum: 18, heroes: "Gladiator Hulk, Korg, Miek the Unhived", result: "Vann" },
+            { expansion: "World war Hulk", name: "Mutating Gamma Rays", comment: "Kul", ranking: 7, victoryPile: 45, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 30, heroes: "Namora, Amadeus Cho, Joe Fixit, She-Hulk", result: "Vann" },
+            { expansion: "World war Hulk", name: "World War Hulk", comment: "Hopplös", ranking: 8, victoryPile: 38, bystanders: 0, bystanderPenalty: 0, twists: 9, twistPenalty: -27, escaped: 0, escapePenalty: 0, sum: 11, heroes: "Illuminati, M.O.D.O.K., General \"Thunderbolt\" Ross, The Sentry", result: "Förlorade med She-Hulk, Rick Jones, Bruce Banner" },
+            { expansion: "X-Men", name: "Alien Brood Encounter", comment: "Kul", ranking: 8, victoryPile: 60, bystanders: 0, bystanderPenalty: 0, twists: 4, twistPenalty: -12, escaped: 1, escapePenalty: -1, sum: 47, heroes: "Dreathbird med Beast, Cannonball, Colossus & Wolverine", result: "Vann" },
+            { expansion: "X-Men", name: "Anti-Mutant Hatred", comment: "Jättekul", ranking: 7, victoryPile: 53, bystanders: 0, bystanderPenalty: 0, twists: 11, twistPenalty: -33, escaped: 0, escapePenalty: 0, sum: 20, heroes: "X-23, Longshot, Beast", result: "Förlorade" },
+            { expansion: "X-Men", name: "The Dark Phoenix Saga", comment: "Supersvår men kul", ranking: 8, victoryPile: 45, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 24, heroes: "Dark Phoenix, Dazzler, Jubilee, Psylocke", result: "Vann med 15 kort kvar i Villain Deck och två i Hero Deck" }
+        ];
+
+        // Utility functions
+        function getExpansions() {
+            const expansions = [...new Set(cardData.map(c => c.expansion))].sort();
+            return expansions;
+        }
+
+        function populateFilters() {
+            const expansionSelect = document.getElementById('filterExpansion');
+            getExpansions().forEach(exp => {
+                const option = document.createElement('option');
+                option.value = exp;
+                option.textContent = exp;
+                expansionSelect.appendChild(option);
+            });
+        }
+
+        function getRatingClass(rating) {
+            if (!rating) return '';
+            return `rating-${rating}`;
+        }
+
+        function getTypeClass(type) {
+            return `type-${type.toLowerCase()}`;
+        }
+
+        function isWin(result) {
+            if (!result) return null;
+            const lower = result.toLowerCase();
+            if (lower.includes('vann') || lower.includes('win')) return true;
+            if (lower.includes('förlorade') || lower.includes('lost') || lower.includes('loss')) return false;
+            return null;
+        }
+
+        // Rendering functions
+        function renderCardsTable(data) {
+            const tbody = document.getElementById('cardsBody');
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="no-results">No cards found matching your criteria</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.map(card => `
+                <tr>
+                    <td><span class="expansion-tag">${card.expansion}</span></td>
+                    <td><span class="card-type ${getTypeClass(card.type)}">${card.type}</span></td>
+                    <td><strong>${card.name}</strong></td>
+                    <td>${card.comment || '-'}</td>
+                    <td>${card.ranking ? `<span class="rating ${getRatingClass(card.ranking)}">${card.ranking}</span>` : '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderGamesTable(data) {
+            const tbody = document.getElementById('gamesBody');
+            const gamesWithResults = data.filter(g => g.victoryPile > 0 || g.sum !== 0);
+            if (gamesWithResults.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" class="no-results">No game results found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = gamesWithResults.map(game => {
+                const winStatus = isWin(game.result);
+                return `
+                <tr>
+                    <td><span class="expansion-tag">${game.expansion}</span></td>
+                    <td><strong>${game.name}</strong></td>
+                    <td>${game.victoryPile}</td>
+                    <td>${game.bystanders} <span class="score-negative">(${game.bystanderPenalty})</span></td>
+                    <td>${game.twists}</td>
+                    <td class="score-negative">${game.twistPenalty}</td>
+                    <td>${game.escaped}</td>
+                    <td class="score-negative">${game.escapePenalty}</td>
+                    <td class="${game.sum >= 0 ? 'score-positive' : 'score-negative'}"><strong>${game.sum}</strong></td>
+                    <td class="game-details">${game.heroes || '-'}</td>
+                    <td class="${winStatus === true ? 'result-win' : winStatus === false ? 'result-loss' : ''}">${winStatus === true ? 'WIN' : winStatus === false ? 'LOSS' : '-'}</td>
+                </tr>
+            `}).join('');
+        }
+
+        function renderStats() {
+            // Top Heroes
+            const heroes = cardData.filter(c => c.type === 'Hero' && c.ranking);
+            const topHeroes = [...heroes].sort((a, b) => b.ranking - a.ranking).slice(0, 8);
+            renderBarChart('topHeroesChart', topHeroes, 10);
+
+            // Top Schemes
+            const schemes = gameData.filter(g => g.ranking);
+            const topSchemes = [...schemes].sort((a, b) => b.ranking - a.ranking).slice(0, 8);
+            renderBarChart('topSchemesChart', topSchemes, 10);
+
+            // Top Masterminds
+            const masterminds = cardData.filter(c => c.type === 'Mastermind' && c.ranking);
+            const topMasterminds = [...masterminds].sort((a, b) => b.ranking - a.ranking).slice(0, 8);
+            renderBarChart('topMastermindsChart', topMasterminds, 10);
+
+            // Expansion Ratings
+            const expansionRatings = {};
+            cardData.filter(c => c.ranking).forEach(card => {
+                if (!expansionRatings[card.expansion]) {
+                    expansionRatings[card.expansion] = { total: 0, count: 0 };
+                }
+                expansionRatings[card.expansion].total += card.ranking;
+                expansionRatings[card.expansion].count++;
+            });
+            const avgRatings = Object.entries(expansionRatings)
+                .map(([name, data]) => ({ name, ranking: (data.total / data.count).toFixed(1) }))
+                .sort((a, b) => b.ranking - a.ranking)
+                .slice(0, 8);
+            renderBarChart('expansionRatingsChart', avgRatings, 10);
+        }
+
+        function renderBarChart(containerId, data, maxValue) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = data.map(item => `
+                <div class="bar-item">
+                    <span class="bar-label" title="${item.name}">${item.name}</span>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: ${(item.ranking / maxValue) * 100}%"></div>
+                    </div>
+                    <span class="bar-value">${item.ranking}</span>
+                </div>
+            `).join('');
+        }
+
+        function updateDashboard() {
+            const totalCards = cardData.length;
+            const totalHeroes = cardData.filter(c => c.type === 'Hero').length;
+            const totalMasterminds = cardData.filter(c => c.type === 'Mastermind').length;
+            const totalSchemes = gameData.length;
+            const gamesPlayed = gameData.filter(g => g.result).length;
+            const wins = gameData.filter(g => isWin(g.result) === true).length;
+            const losses = gameData.filter(g => isWin(g.result) === false).length;
+            const avgScore = gameData.filter(g => g.sum !== 0).reduce((acc, g) => acc + g.sum, 0) / gameData.filter(g => g.sum !== 0).length;
+            const highScore = Math.max(...gameData.map(g => g.sum));
+
+            document.getElementById('statsDashboard').innerHTML = `
+                <div class="stat-card">
+                    <h3>Total Cards</h3>
+                    <div class="number">${totalCards}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Heroes</h3>
+                    <div class="number">${totalHeroes}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Masterminds</h3>
+                    <div class="number">${totalMasterminds}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Schemes</h3>
+                    <div class="number">${totalSchemes}</div>
+                </div>
+                <div class="stat-card wins">
+                    <h3>Wins</h3>
+                    <div class="number">${wins}</div>
+                </div>
+                <div class="stat-card losses">
+                    <h3>Losses</h3>
+                    <div class="number">${losses}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Win Rate</h3>
+                    <div class="number">${gamesPlayed > 0 ? Math.round((wins / (wins + losses)) * 100) : 0}%</div>
+                </div>
+                <div class="stat-card">
+                    <h3>High Score</h3>
+                    <div class="number">${highScore}</div>
+                </div>
+            `;
+        }
+
+        // Filtering
+        function filterData() {
+            const expansion = document.getElementById('filterExpansion').value;
+            const type = document.getElementById('filterType').value;
+            const search = document.getElementById('searchInput').value.toLowerCase().trim();
+            const minRating = parseInt(document.getElementById('filterRating').value) || 0;
+
+            let filteredCards = cardData.filter(card => {
+                if (expansion && card.expansion !== expansion) return false;
+                if (type && card.type !== type) return false;
+                if (search) {
+                    const nameMatch = card.name.toLowerCase().includes(search);
+                    const commentMatch = card.comment && card.comment.toLowerCase().includes(search);
+                    const expansionMatch = card.expansion.toLowerCase().includes(search);
+                    if (!nameMatch && !commentMatch && !expansionMatch) return false;
+                }
+                if (minRating && (!card.ranking || card.ranking < minRating)) return false;
+                return true;
+            });
+
+            let filteredGames = gameData.filter(game => {
+                if (expansion && game.expansion !== expansion) return false;
+                if (search) {
+                    const nameMatch = game.name.toLowerCase().includes(search);
+                    const heroesMatch = game.heroes && game.heroes.toLowerCase().includes(search);
+                    const expansionMatch = game.expansion.toLowerCase().includes(search);
+                    if (!nameMatch && !heroesMatch && !expansionMatch) return false;
+                }
+                if (minRating && (!game.ranking || game.ranking < minRating)) return false;
+                return true;
+            });
+
+            renderCardsTable(filteredCards);
+            renderGamesTable(filteredGames);
+        }
+
+        // Sorting
+        let sortColumn = '';
+        let sortDirection = 'asc';
+
+        function sortTable(column, tableId) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+
+            const data = tableId === 'cards' ? [...cardData] : [...gameData];
+            data.sort((a, b) => {
+                let valA = a[column];
+                let valB = b[column];
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+                if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            if (tableId === 'cards') {
+                renderCardsTable(data);
+            } else {
+                renderGamesTable(data);
+            }
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
+            });
+        });
+
+        // Event listeners
+        document.getElementById('filterExpansion').addEventListener('change', filterData);
+        document.getElementById('filterType').addEventListener('change', filterData);
+        document.getElementById('searchInput').addEventListener('input', filterData);
+        document.getElementById('searchInput').addEventListener('keyup', filterData);
+        document.getElementById('filterRating').addEventListener('change', filterData);
+
+        document.querySelectorAll('#cardsTable th.sortable').forEach(th => {
+            th.addEventListener('click', () => sortTable(th.dataset.sort, 'cards'));
+        });
+
+        document.querySelectorAll('#gamesTable th.sortable').forEach(th => {
+            th.addEventListener('click', () => sortTable(th.dataset.sort, 'games'));
+        });
+
+        // Initialize
+        populateFilters();
+        renderCardsTable(cardData);
+        renderGamesTable(gameData);
+        updateDashboard();
+        renderStats();
+    </script>
+</body>
+</html>
