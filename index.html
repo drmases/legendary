@@ -1871,16 +1871,28 @@
         // Initialize
         async function init() {
             const loaded = await loadDataFromAPI();
-            if (loaded) {
+
+            if (loaded && cardData.length > 0) {
                 populateFilters();
                 renderCardsTable(cardData);
                 renderGamesTable(gameData);
                 updateDashboard();
                 renderStats();
             } else {
-                // Show import button if database is empty or connection failed
-                document.getElementById('dataCount').innerHTML =
-                    '<button class="btn btn-primary" onclick="importInitialData()">Import Initial Data</button>';
+                // Show prominent import message
+                const msg = loaded
+                    ? 'Database is empty. Click below to import your data.'
+                    : 'Could not connect to database. Make sure api.php is configured and uploaded.';
+
+                document.getElementById('cardsBody').innerHTML = `
+                    <tr><td colspan="6" style="text-align:center; padding:40px;">
+                        <p style="margin-bottom:20px; color:#888;">${msg}</p>
+                        <button class="btn btn-primary" onclick="importInitialData()" style="font-size:1.2em; padding:15px 30px;">
+                            Import Initial Dataset
+                        </button>
+                    </td></tr>`;
+
+                document.getElementById('dataCount').innerHTML = msg;
             }
         }
         init();

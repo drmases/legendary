@@ -2,10 +2,10 @@
 // Marvel Legendary Stats API
 // Database configuration for one.com
 
-$db_host = 'globbin.se.mysql';      // one.com database host (usually same as db name)
-$db_name = 'globbin.se.mysql';      // Your database name
-$db_user = 'globbin.se.mysql';      // Usually same as database name at one.com
-$db_pass = 'YOUR_PASSWORD_HERE';    // <-- FILL IN YOUR DATABASE PASSWORD
+$db_host = 'globbin.se.mysql';
+$db_name = 'globbin_se';
+$db_user = 'globbin_se';
+$db_pass = '131313';
 
 // Enable CORS for local testing (remove in production if not needed)
 header('Content-Type: application/json');
@@ -51,9 +51,9 @@ function initTables($pdo) {
         bystander_penalty INT DEFAULT 0,
         twists INT DEFAULT 0,
         twist_penalty INT DEFAULT 0,
-        escaped INT DEFAULT 0,
+        villains_escaped INT DEFAULT 0,
         escape_penalty INT DEFAULT 0,
-        sum INT DEFAULT 0,
+        total_score INT DEFAULT 0,
         heroes TEXT,
         result VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -86,9 +86,9 @@ switch ($action) {
                 'bystanderPenalty' => (int)$game['bystander_penalty'],
                 'twists' => (int)$game['twists'],
                 'twistPenalty' => (int)$game['twist_penalty'],
-                'escaped' => (int)$game['escaped'],
+                'escaped' => (int)$game['villains_escaped'],
                 'escapePenalty' => (int)$game['escape_penalty'],
-                'sum' => (int)$game['sum'],
+                'sum' => (int)$game['total_score'],
                 'heroes' => $game['heroes'],
                 'result' => $game['result']
             ];
@@ -118,7 +118,7 @@ switch ($action) {
 
         if (isset($data['id']) && $data['id']) {
             // Update existing game
-            $stmt = $pdo->prepare("UPDATE games SET expansion=?, name=?, comment=?, ranking=?, victory_pile=?, bystanders=?, bystander_penalty=?, twists=?, twist_penalty=?, escaped=?, escape_penalty=?, sum=?, heroes=?, result=? WHERE id=?");
+            $stmt = $pdo->prepare("UPDATE games SET expansion=?, name=?, comment=?, ranking=?, victory_pile=?, bystanders=?, bystander_penalty=?, twists=?, twist_penalty=?, villains_escaped=?, escape_penalty=?, total_score=?, heroes=?, result=? WHERE id=?");
             $stmt->execute([
                 $data['expansion'], $data['name'], $data['comment'] ?? '', $data['ranking'],
                 $data['victoryPile'], $data['bystanders'], $data['bystanderPenalty'],
@@ -128,7 +128,7 @@ switch ($action) {
             echo json_encode(['success' => true, 'id' => $data['id']]);
         } else {
             // Insert new game
-            $stmt = $pdo->prepare("INSERT INTO games (expansion, name, comment, ranking, victory_pile, bystanders, bystander_penalty, twists, twist_penalty, escaped, escape_penalty, sum, heroes, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO games (expansion, name, comment, ranking, victory_pile, bystanders, bystander_penalty, twists, twist_penalty, villains_escaped, escape_penalty, total_score, heroes, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $data['expansion'], $data['name'], $data['comment'] ?? '', $data['ranking'],
                 $data['victoryPile'], $data['bystanders'], $data['bystanderPenalty'],
@@ -168,7 +168,7 @@ switch ($action) {
         }
 
         // Import games
-        $stmt = $pdo->prepare("INSERT INTO games (expansion, name, comment, ranking, victory_pile, bystanders, bystander_penalty, twists, twist_penalty, escaped, escape_penalty, sum, heroes, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO games (expansion, name, comment, ranking, victory_pile, bystanders, bystander_penalty, twists, twist_penalty, villains_escaped, escape_penalty, total_score, heroes, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         foreach ($data['games'] as $game) {
             $stmt->execute([
                 $game['expansion'], $game['name'], $game['comment'] ?? '', $game['ranking'] ?? null,
