@@ -773,10 +773,10 @@
 
             <div class="form-section">
                 <h3>Manage Data</h3>
-                <p class="data-count" id="dataCount"></p>
+                <p class="data-count" id="dataCount">Connecting to database...</p>
                 <div class="form-actions">
+                    <button type="button" class="btn btn-primary" onclick="importInitialData()">Import Initial Dataset</button>
                     <button type="button" class="btn btn-primary" onclick="exportData()">Export Data (JSON)</button>
-                    <button type="button" class="btn btn-danger" onclick="clearCustomData()">Clear Custom Data</button>
                 </div>
             </div>
         </div>
@@ -789,8 +789,15 @@
     </div>
 
     <script>
-        // Data
-        const cardData = [
+        // API endpoint
+        const API_URL = 'api.php';
+
+        // Active data arrays (loaded from database)
+        let cardData = [];
+        let gameData = [];
+
+        // Initial data for first-time import
+        const INITIAL_CARD_DATA = [
             { expansion: "Annihilation", type: "Hero", name: "Brainstorm", comment: "Kul", ranking: 7 },
             { expansion: "Annihilation", type: "Hero", name: "PSI-Lord", comment: "Ok", ranking: 6 },
             { expansion: "Annihilation", type: "Hero", name: "Fantastic Four United", comment: "Ok", ranking: 6 },
@@ -1079,7 +1086,7 @@
             { expansion: "X-Men", type: "Scheme", name: "The Dark Phoenix Saga", comment: "Supersvår men kul", ranking: 8 }
         ];
 
-        const gameData = [
+        const INITIAL_GAME_DATA = [
             { expansion: "Annihilation", name: "Put Humanity on Trial", comment: "Kul", ranking: 7, victoryPile: 36, bystanders: 0, bystanderPenalty: 0, twists: 10, twistPenalty: -30, escaped: 0, escapePenalty: 0, sum: 6, heroes: "Kang the Conqueror, PSI-Lord, Fantastic Four United, Brainstorm", result: "Vann" },
             { expansion: "Annihilation", name: "Sneak Attack the Heroes Homes", comment: "Kul", ranking: 7, victoryPile: 28, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 13, heroes: "Annihilus, Heralds of Galactus, Fantastic Four United, Super-Skrull", result: "Förlorade. Jätteroligt, måste köras igen" },
             { expansion: "Ant-Man", name: "Trap Heroes in the Microverse", comment: "Riktigt bra", ranking: 8, victoryPile: 31, bystanders: 0, bystanderPenalty: 0, twists: 1, twistPenalty: -3, escaped: 0, escapePenalty: 0, sum: 28, heroes: "Ultron, Jocasta, Ant-Man, WASP", result: "Vann på typ 5 rundan" },
@@ -1238,12 +1245,12 @@
                     <td><strong>${card.name}</strong></td>
                     <td>${card.comment || '-'}</td>
                     <td>${renderStars(card.ranking)}</td>
-                    <td class="actions-cell">${card._custom ? `
+                    <td class="actions-cell">
                         <div class="row-actions">
-                            <button class="btn-icon btn-edit" onclick="editCard(${card._id})" title="Edit">✎</button>
-                            <button class="btn-icon btn-delete" onclick="deleteCard(${card._id})" title="Delete">✕</button>
+                            <button class="btn-icon btn-edit" onclick="editCard('${card.id}')" title="Edit">✎</button>
+                            <button class="btn-icon btn-delete" onclick="deleteCard('${card.id}')" title="Delete">✕</button>
                         </div>
-                    ` : '-'}</td>
+                    </td>
                 </tr>
             `).join('');
         }
@@ -1268,12 +1275,12 @@
                     <td class="${game.sum >= 0 ? 'score-positive' : 'score-negative'}"><strong>${game.sum}</strong></td>
                     <td class="game-details">${game.heroes || '-'}</td>
                     <td class="${winStatus === true ? 'result-win' : winStatus === false ? 'result-loss' : ''}">${winStatus === true ? 'WIN' : winStatus === false ? 'LOSS' : '-'}</td>
-                    <td class="actions-cell">${game._custom ? `
+                    <td class="actions-cell">
                         <div class="row-actions">
-                            <button class="btn-icon btn-edit" onclick="editGame(${game._id})" title="Edit">✎</button>
-                            <button class="btn-icon btn-delete" onclick="deleteGame(${game._id})" title="Delete">✕</button>
+                            <button class="btn-icon btn-edit" onclick="editGame('${game.id}')" title="Edit">✎</button>
+                            <button class="btn-icon btn-delete" onclick="deleteGame('${game.id}')" title="Delete">✕</button>
                         </div>
-                    ` : '-'}</td>
+                    </td>
                 </tr>
             `}).join('');
         }
@@ -1465,75 +1472,109 @@
         // Make filterData globally accessible for inline handlers
         window.filterData = filterData;
 
-        // LocalStorage handling
+        // Database API handling
         let editingCardId = null;
         let editingGameId = null;
 
-        function loadCustomData() {
-            const customCards = JSON.parse(localStorage.getItem('customCards') || '[]');
-            const customGames = JSON.parse(localStorage.getItem('customGames') || '[]');
+        async function loadDataFromAPI() {
+            try {
+                const response = await fetch(`${API_URL}?action=load`);
+                const data = await response.json();
 
-            // Add custom data to arrays with _custom flag and _id
-            customCards.forEach(card => {
-                card._custom = true;
-                cardData.push(card);
-            });
-            customGames.forEach(game => {
-                game._custom = true;
-                gameData.push(game);
-            });
-
-            updateDataCount();
-        }
-
-        function saveCard(card) {
-            const customCards = JSON.parse(localStorage.getItem('customCards') || '[]');
-            card._custom = true;
-            card._id = Date.now();
-            customCards.push(card);
-            localStorage.setItem('customCards', JSON.stringify(customCards));
-            cardData.push(card);
-            updateDataCount();
-        }
-
-        function updateCard(id, updatedCard) {
-            const customCards = JSON.parse(localStorage.getItem('customCards') || '[]');
-            const index = customCards.findIndex(c => c._id === id);
-            if (index !== -1) {
-                updatedCard._custom = true;
-                updatedCard._id = id;
-                customCards[index] = updatedCard;
-                localStorage.setItem('customCards', JSON.stringify(customCards));
-
-                // Update in cardData array
-                const cardIndex = cardData.findIndex(c => c._id === id);
-                if (cardIndex !== -1) {
-                    cardData[cardIndex] = updatedCard;
+                if (data.error) {
+                    console.error('API Error:', data.error);
+                    showToast('Error loading data: ' + data.error);
+                    return false;
                 }
+
+                cardData = data.cards || [];
+                gameData = data.games || [];
+                updateDataCount();
+                return true;
+            } catch (error) {
+                console.error('Failed to load data:', error);
+                showToast('Failed to connect to database');
+                return false;
             }
-            updateDataCount();
         }
 
-        function deleteCard(id) {
+        async function saveCard(card) {
+            try {
+                const response = await fetch(`${API_URL}?action=saveCard`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(card)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    card.id = result.id;
+                    cardData.push(card);
+                    updateDataCount();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Failed to save card:', error);
+                showToast('Failed to save card');
+                return false;
+            }
+        }
+
+        async function updateCard(id, updatedCard) {
+            try {
+                updatedCard.id = id;
+                const response = await fetch(`${API_URL}?action=saveCard`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedCard)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    const cardIndex = cardData.findIndex(c => c.id == id);
+                    if (cardIndex !== -1) {
+                        cardData[cardIndex] = updatedCard;
+                    }
+                    updateDataCount();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Failed to update card:', error);
+                showToast('Failed to update card');
+                return false;
+            }
+        }
+
+        async function deleteCard(id) {
             if (!confirm('Delete this card?')) return;
 
-            const customCards = JSON.parse(localStorage.getItem('customCards') || '[]');
-            const filtered = customCards.filter(c => c._id !== id);
-            localStorage.setItem('customCards', JSON.stringify(filtered));
+            try {
+                const response = await fetch(`${API_URL}?action=deleteCard`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+                const result = await response.json();
 
-            // Remove from cardData array
-            const index = cardData.findIndex(c => c._id === id);
-            if (index !== -1) {
-                cardData.splice(index, 1);
+                if (result.success) {
+                    const index = cardData.findIndex(c => c.id == id);
+                    if (index !== -1) {
+                        cardData.splice(index, 1);
+                    }
+                    filterData();
+                    updateDashboard();
+                    showToast('Card deleted');
+                }
+            } catch (error) {
+                console.error('Failed to delete card:', error);
+                showToast('Failed to delete card');
             }
-
-            filterData();
-            updateDashboard();
-            showToast('Card deleted');
         }
 
         function editCard(id) {
-            const card = cardData.find(c => c._id === id);
+            const card = cardData.find(c => c.id == id);
             if (!card) return;
 
             editingCardId = id;
@@ -1556,54 +1597,83 @@
             document.getElementById('cardForm').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function saveGame(game) {
-            const customGames = JSON.parse(localStorage.getItem('customGames') || '[]');
-            game._custom = true;
-            game._id = Date.now();
-            customGames.push(game);
-            localStorage.setItem('customGames', JSON.stringify(customGames));
-            gameData.push(game);
-            updateDataCount();
-        }
+        async function saveGame(game) {
+            try {
+                const response = await fetch(`${API_URL}?action=saveGame`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(game)
+                });
+                const result = await response.json();
 
-        function updateGame(id, updatedGame) {
-            const customGames = JSON.parse(localStorage.getItem('customGames') || '[]');
-            const index = customGames.findIndex(g => g._id === id);
-            if (index !== -1) {
-                updatedGame._custom = true;
-                updatedGame._id = id;
-                customGames[index] = updatedGame;
-                localStorage.setItem('customGames', JSON.stringify(customGames));
-
-                // Update in gameData array
-                const gameIndex = gameData.findIndex(g => g._id === id);
-                if (gameIndex !== -1) {
-                    gameData[gameIndex] = updatedGame;
+                if (result.success) {
+                    game.id = result.id;
+                    gameData.push(game);
+                    updateDataCount();
+                    return true;
                 }
+                return false;
+            } catch (error) {
+                console.error('Failed to save game:', error);
+                showToast('Failed to save game');
+                return false;
             }
-            updateDataCount();
         }
 
-        function deleteGame(id) {
+        async function updateGame(id, updatedGame) {
+            try {
+                updatedGame.id = id;
+                const response = await fetch(`${API_URL}?action=saveGame`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedGame)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    const gameIndex = gameData.findIndex(g => g.id == id);
+                    if (gameIndex !== -1) {
+                        gameData[gameIndex] = updatedGame;
+                    }
+                    updateDataCount();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Failed to update game:', error);
+                showToast('Failed to update game');
+                return false;
+            }
+        }
+
+        async function deleteGame(id) {
             if (!confirm('Delete this game result?')) return;
 
-            const customGames = JSON.parse(localStorage.getItem('customGames') || '[]');
-            const filtered = customGames.filter(g => g._id !== id);
-            localStorage.setItem('customGames', JSON.stringify(filtered));
+            try {
+                const response = await fetch(`${API_URL}?action=deleteGame`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+                const result = await response.json();
 
-            // Remove from gameData array
-            const index = gameData.findIndex(g => g._id === id);
-            if (index !== -1) {
-                gameData.splice(index, 1);
+                if (result.success) {
+                    const index = gameData.findIndex(g => g.id == id);
+                    if (index !== -1) {
+                        gameData.splice(index, 1);
+                    }
+                    filterData();
+                    updateDashboard();
+                    showToast('Game result deleted');
+                }
+            } catch (error) {
+                console.error('Failed to delete game:', error);
+                showToast('Failed to delete game');
             }
-
-            filterData();
-            updateDashboard();
-            showToast('Game result deleted');
         }
 
         function editGame(id) {
-            const game = gameData.find(g => g._id === id);
+            const game = gameData.find(g => g.id == id);
             if (!game) return;
 
             editingGameId = id;
@@ -1648,11 +1718,9 @@
         }
 
         function updateDataCount() {
-            const customCards = JSON.parse(localStorage.getItem('customCards') || '[]');
-            const customGames = JSON.parse(localStorage.getItem('customGames') || '[]');
             const countEl = document.getElementById('dataCount');
             if (countEl) {
-                countEl.textContent = `Custom data: ${customCards.length} cards, ${customGames.length} game results`;
+                countEl.textContent = `Database: ${cardData.length} cards, ${gameData.length} games`;
             }
         }
 
@@ -1664,9 +1732,10 @@
         }
 
         function exportData() {
-            const customCards = JSON.parse(localStorage.getItem('customCards') || '[]');
-            const customGames = JSON.parse(localStorage.getItem('customGames') || '[]');
-            const data = { cards: customCards, games: customGames };
+            const data = {
+                cards: cardData,
+                games: gameData
+            };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1677,16 +1746,40 @@
             showToast('Data exported!');
         }
 
-        function clearCustomData() {
-            if (confirm('Are you sure you want to delete all custom data? This cannot be undone.')) {
-                localStorage.removeItem('customCards');
-                localStorage.removeItem('customGames');
-                showToast('Custom data cleared. Refresh to see changes.');
+        async function importInitialData() {
+            if (!confirm('Import initial dataset to database? This will replace all existing data.')) return;
+
+            try {
+                const response = await fetch(`${API_URL}?action=importInitialData`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cards: INITIAL_CARD_DATA,
+                        games: INITIAL_GAME_DATA
+                    })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast(`Imported ${result.cardsImported} cards and ${result.gamesImported} games!`);
+                    await loadDataFromAPI();
+                    filterData();
+                    updateDashboard();
+                } else {
+                    showToast('Import failed: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Import failed:', error);
+                showToast('Import failed: ' + error.message);
             }
         }
 
+        function clearCustomData() {
+            showToast('Use phpMyAdmin to manage database directly');
+        }
+
         // Form handlers
-        document.getElementById('cardForm').addEventListener('submit', function(e) {
+        document.getElementById('cardForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const card = {
@@ -1698,13 +1791,17 @@
             };
 
             if (editingCardId) {
-                updateCard(editingCardId, card);
-                resetCardForm();
-                showToast('Card updated successfully!');
+                const success = await updateCard(editingCardId, card);
+                if (success) {
+                    resetCardForm();
+                    showToast('Card updated successfully!');
+                }
             } else {
-                saveCard(card);
-                this.reset();
-                showToast('Card added successfully!');
+                const success = await saveCard(card);
+                if (success) {
+                    this.reset();
+                    showToast('Card added successfully!');
+                }
             }
 
             // Refresh displays
@@ -1712,7 +1809,7 @@
             updateDashboard();
         });
 
-        document.getElementById('gameForm').addEventListener('submit', function(e) {
+        document.getElementById('gameForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const twists = parseInt(document.getElementById('gameTwists').value) || 0;
@@ -1742,13 +1839,17 @@
             };
 
             if (editingGameId) {
-                updateGame(editingGameId, game);
-                resetGameForm();
-                showToast('Game result updated successfully!');
+                const success = await updateGame(editingGameId, game);
+                if (success) {
+                    resetGameForm();
+                    showToast('Game result updated successfully!');
+                }
             } else {
-                saveGame(game);
-                this.reset();
-                showToast('Game result added successfully!');
+                const success = await saveGame(game);
+                if (success) {
+                    this.reset();
+                    showToast('Game result added successfully!');
+                }
             }
 
             // Refresh displays
@@ -1759,6 +1860,7 @@
         // Make functions globally accessible
         window.exportData = exportData;
         window.clearCustomData = clearCustomData;
+        window.importInitialData = importInitialData;
         window.editCard = editCard;
         window.deleteCard = deleteCard;
         window.editGame = editGame;
@@ -1767,12 +1869,21 @@
         window.resetGameForm = resetGameForm;
 
         // Initialize
-        loadCustomData();
-        populateFilters();
-        renderCardsTable(cardData);
-        renderGamesTable(gameData);
-        updateDashboard();
-        renderStats();
+        async function init() {
+            const loaded = await loadDataFromAPI();
+            if (loaded) {
+                populateFilters();
+                renderCardsTable(cardData);
+                renderGamesTable(gameData);
+                updateDashboard();
+                renderStats();
+            } else {
+                // Show import button if database is empty or connection failed
+                document.getElementById('dataCount').innerHTML =
+                    '<button class="btn btn-primary" onclick="importInitialData()">Import Initial Data</button>';
+            }
+        }
+        init();
     </script>
 </body>
 </html>
