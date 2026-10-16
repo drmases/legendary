@@ -47,7 +47,7 @@ header.top {
 header.top p { color: var(--muted); }
 
 .shelf {
-    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px;
+    display: grid; grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); gap: 6px;
     border-bottom: 1px solid var(--line); margin-bottom: 22px;
 }
 .spine {
@@ -120,7 +120,7 @@ th.sorted.desc::after { content: ' ▼'; }
 tbody tr:hover { background: rgba(255,255,255,.03); }
 td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pen { color: var(--loss); font-size: .85em; }
-.tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: .8rem; font-weight: 600; color: #fff; white-space: nowrap; text-shadow: 0 1px 1px rgba(0,0,0,.35); }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: .8rem; font-weight: 600; color: #fff; white-space: nowrap; text-shadow: 0 1px 1px rgba(0,0,0,.35); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
 .type { color: var(--muted); font-size: .85rem; }
 .rating { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .pips { display: inline-flex; gap: 2px; }
@@ -243,6 +243,7 @@ footer { color: var(--muted); font-size: .8rem; margin-top: 36px; }
                 <div class="grid">
                     <label>Expansion<input id="gExpansion" list="expansionList" required></label>
                     <label><span id="gNameLabel">Scheme</span><input id="gName" required></label>
+                    <label>Played<input id="gPlayed" type="date"></label>
                     <label>Rating (1–10)<input id="gRating" type="number" min="1" max="10"></label>
                     <label>Result<select id="gResult">
                         <option value="">–</option><option value="Vann">Win</option><option value="Förlorade">Loss</option>
@@ -352,9 +353,9 @@ function expansionColor(exp) {
 }
 function isWin(result) {
     if (!result) return null;
-    const r = result.toLowerCase();
-    if (r.includes('vann') || r.includes('win')) return true;
-    if (r.includes('förlor') || r.includes('lost') || r.includes('loss')) return false;
+    const r = result.trim().toLowerCase();
+    if (/^(vann|vinst|won|win)/.test(r)) return true;
+    if (/^(förlor|forlor|lost|loss)/.test(r)) return false;
     return null;
 }
 function ratingHtml(n) {
@@ -363,6 +364,12 @@ function ratingHtml(n) {
     for (let i = 1; i <= 10; i++) pips += `<i class="${i <= n ? 'on' : ''}"></i>`;
     return `<span class="rating"><span class="pips" aria-hidden="true">${pips}</span><b>${n}</b></span>`;
 }
+function today() {
+    const d = new Date();
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+// Newest first: by play date, then by id (older rows have no date).
+function byRecent(a, b) { return (b.playedOn || '').localeCompare(a.playedOn || '') || b.id - a.id; }
 function plural(t) { return t.endsWith('s') ? t : /o$/i.test(t) ? t + 'es' : t + 's'; }
 function toast(msg) {
     const t = $('toast'); t.textContent = msg; t.classList.add('show');
@@ -382,6 +389,7 @@ function summarize(list) {
 
 /* ---------- Navigation ---------- */
 function renderShelf() {
+    $('shelf').style.setProperty('--n', Object.keys(FRANCHISES).length);
     $('shelf').innerHTML = Object.entries(FRANCHISES).map(([key, f]) => {
         const n = games.filter(g => g.franchise === key).length;
         return `<button class="spine" style="--c:${f.color}" data-f="${key}" aria-current="${key === current}">
@@ -389,7 +397,11 @@ function renderShelf() {
             <span class="meta">${n} ${n === 1 ? 'game' : 'games'}</span></button>`;
     }).join('');
 }
-function go(key) { location.hash = key ? key : ''; if (!key) route(); }
+function go(key) {
+    if (key) { location.hash = key; return; }   // hashchange calls route()
+    history.pushState(null, '', location.pathname + location.search);
+    route();
+}
 function route() {
     const key = location.hash.slice(1);
     current = FRANCHISES[key] ? key : null;
@@ -409,7 +421,7 @@ function renderOverview() {
         const list = games.filter(g => g.franchise === key);
         const nCards = cards.filter(c => c.franchise === key).length;
         const s = summarize(list);
-        const last = [...list].sort((a, b) => b.id - a.id)[0];
+        const last = [...list].sort(byRecent)[0];
         const body = list.length || nCards
             ? `<div class="ov-nums">
                  <div><b>${s.played}</b><span>played</span></div>
@@ -417,7 +429,7 @@ function renderOverview() {
                  <div><b>${s.high}</b><span>high score</span></div>
                  <div><b>${nCards}</b><span>cards rated</span></div>
                </div>
-               ${last ? `<div class="ov-recent">Latest: <strong>${esc(last.name)}</strong> (${esc(last.expansion)})</div>` : ''}`
+               ${last ? `<div class="ov-recent">Latest: <strong>${esc(last.name)}</strong> (${esc(last.expansion)})${last.playedOn ? ` · ${esc(last.playedOn)}` : ''}</div>` : ''}`
             : `<p class="ov-empty">No games logged yet. Open it to add the first one.</p>`;
         return `<button class="ov-card" style="--c:${f.color}" data-f="${key}">
             <h2>${esc(f.short)}</h2><p class="full">${esc(f.full)}</p>${body}</button>`;
@@ -428,11 +440,18 @@ function renderOverview() {
 function myCards() { return cards.filter(c => c.franchise === current); }
 function myGames() { return games.filter(g => g.franchise === current); }
 
-function enterFranchise() {
-    const f = cfg();
+function refreshExpansions() {
+    const keep = $('fExpansion').value;
     const exps = [...new Set([...myCards(), ...myGames()].map(x => x.expansion))].sort((a, b) => a.localeCompare(b));
     $('fExpansion').innerHTML = '<option value="">All expansions</option>' + exps.map(e => `<option>${esc(e)}</option>`).join('');
+    $('fExpansion').value = exps.includes(keep) ? keep : '';
     $('expansionList').innerHTML = exps.map(e => `<option value="${esc(e)}">`).join('');
+}
+
+function enterFranchise() {
+    const f = cfg();
+    $('fExpansion').value = '';
+    refreshExpansions();
     $('fType').innerHTML = '<option value="">All types</option>' + f.types.map(t => `<option value="${esc(t)}">${esc(plural(t))}</option>`).join('');
     $('cType').innerHTML = f.types.map(t => `<option>${esc(t)}</option>`).join('');
     $('gNameLabel').textContent = f.scenario;
@@ -505,13 +524,14 @@ function renderGames(list) {
     $('gamesHead').innerHTML = `<tr>
         ${sortHead('Expansion', 'expansion', 'games')}
         ${sortHead(f.scenario, 'name', 'games')}
+        ${sortHead('Played', 'playedOn', 'games')}
         ${detailed ? sortHead('Victory pile', 'victoryPile', 'games') + '<th>Bystanders</th><th>Twists</th><th>Escaped</th>' : ''}
         ${sortHead('Score', 'sum', 'games')}
         <th>${esc(f.used)}</th>
         ${sortHead('Rating', 'ranking', 'games')}
         <th>Result</th><th>Comment</th><th></th></tr>`;
-    const cols = detailed ? 11 : 8;
-    const rows = sorted(list, 'games');
+    const cols = detailed ? 12 : 9;
+    const rows = sortState.games.col ? sorted(list, 'games') : [...list].sort(byRecent);
     if (!rows.length) {
         $('gamesBody').innerHTML = `<tr><td colspan="${cols}" class="empty">${myGames().length ? 'No results match the filters.' : 'No games logged yet. Use “+ Add” to log the first one.'}</td></tr>`;
         return;
@@ -523,6 +543,7 @@ function renderGames(list) {
         return `<tr>
             <td><span class="tag" style="background:${expansionColor(g.expansion)}">${esc(g.expansion)}</span></td>
             <td><strong>${esc(g.name)}</strong></td>
+            <td class="num">${g.playedOn ? esc(g.playedOn) : '<span class="muted">–</span>'}</td>
             ${detailed ? `<td class="num">${g.victoryPile}</td>
                 <td class="num">${g.bystanders} <span class="pen">(${g.bystanderPenalty})</span></td>
                 <td class="num">${g.twists} <span class="pen">(${g.twistPenalty})</span></td>
@@ -647,6 +668,7 @@ function resetGameForm() {
     $('gameSubmit').textContent = 'Add result';
     $('gameCancel').hidden = true;
     [...$('gResult').options].forEach(o => { if (o.dataset.custom) o.remove(); });
+    $('gPlayed').value = today();
     updatePreview();
 }
 function resetCardForm() {
@@ -667,7 +689,7 @@ function editGame(id) {
     const g = games.find(x => x.id == id); if (!g) return;
     resetGameForm();
     editingGameId = g.id;
-    $('gExpansion').value = g.expansion; $('gName').value = g.name;
+    $('gExpansion').value = g.expansion; $('gName').value = g.name; $('gPlayed').value = g.playedOn || '';
     $('gRating').value = g.ranking ?? ''; $('gHeroes').value = g.heroes || ''; $('gComment').value = g.comment || '';
     $('gVictory').value = g.victoryPile; $('gBystanders').value = g.bystanders;
     $('gTwists').value = g.twists; $('gEscaped').value = g.escaped; $('gScore').value = g.sum || '';
@@ -703,6 +725,7 @@ $('gameForm').addEventListener('submit', async e => {
     const game = {
         franchise: current,
         expansion: $('gExpansion').value.trim(), name: $('gName').value.trim(),
+        playedOn: $('gPlayed').value || null,
         comment: $('gComment').value.trim(), ranking: parseInt($('gRating').value) || null,
         heroes: $('gHeroes').value.trim(), result: $('gResult').value,
         ...computeScore(),
@@ -714,7 +737,7 @@ $('gameForm').addEventListener('submit', async e => {
     const i = games.findIndex(g => g.id === game.id);
     if (i >= 0) games[i] = game; else games.push(game);
     toast(editingGameId ? 'Game result saved' : 'Game result added');
-    enterFranchise(); renderShelf(); showTab('games');
+    resetGameForm(); refreshExpansions(); renderShelf(); renderAll(); showTab('games');
 });
 $('cardForm').addEventListener('submit', async e => {
     e.preventDefault();
@@ -731,7 +754,7 @@ $('cardForm').addEventListener('submit', async e => {
     if (i >= 0) cards[i] = card; else cards.push(card);
     toast(editingCardId ? 'Card saved' : 'Card added');
     const wasEditing = !!editingCardId;
-    enterFranchise();
+    resetCardForm(); refreshExpansions(); renderAll();
     showTab(wasEditing ? 'cards' : 'add');
 });
 
@@ -763,7 +786,7 @@ document.addEventListener('click', e => {
     if (t.dataset.delCard) return remove('card', t.dataset.delCard);
     if (t.matches('th.sortable')) {
         const which = t.dataset.table, s = sortState[which];
-        s.dir = s.col === t.dataset.sort ? -s.dir : (['ranking', 'sum', 'victoryPile'].includes(t.dataset.sort) ? -1 : 1);
+        s.dir = s.col === t.dataset.sort ? -s.dir : (['ranking', 'sum', 'victoryPile', 'playedOn'].includes(t.dataset.sort) ? -1 : 1);
         s.col = t.dataset.sort;
         renderAll();
     }

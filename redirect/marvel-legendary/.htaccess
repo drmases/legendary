@@ -1,0 +1,6 @@
+# Everything under /marvel-legendary/ (including the old api.php) moves to the new board.
+# Falls back to the meta refresh in index.html if mod_rewrite is unavailable.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^ /legendary/#marvel [R=301,L,NE]
+</IfModule>

@@ -45,6 +45,7 @@ function initTables(PDO $pdo) {
         franchise VARCHAR(32) NOT NULL DEFAULT 'marvel',
         expansion VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
+        played_on DATE NULL,
         comment TEXT,
         ranking INT,
         victory_pile INT DEFAULT 0,
@@ -61,15 +62,75 @@ function initTables(PDO $pdo) {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    // Migration from the Marvel-only version: existing rows become 'marvel'.
-    foreach (['cards', 'games'] as $table) {
-        $has = $pdo->query("SHOW COLUMNS FROM `$table` LIKE 'franchise'")->fetch();
-        if (!$has) {
-            $pdo->exec("ALTER TABLE `$table` ADD COLUMN franchise VARCHAR(32) NOT NULL DEFAULT 'marvel' AFTER id");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS legendary_meta (
+        k VARCHAR(64) PRIMARY KEY,
+        v VARCHAR(255) NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+}
+
+function hasColumn(PDO $pdo, string $table, string $column) {
+    return (bool)$pdo->query("SHOW COLUMNS FROM `$table` LIKE " . $pdo->quote($column))->fetch();
+}
+
+// Text saved through an old latin1 connection is stored double-encoded ("FÃ¶rlorade").
+// A value is only rewritten when the repair round-trips exactly, so correct text is never touched.
+function repairMojibake($v) {
+    if (!is_string($v) || !preg_match('/[ÃÂâ]./u', $v)) return $v;
+    $fixed = mb_convert_encoding($v, 'Windows-1252', 'UTF-8');
+    if (!mb_check_encoding($fixed, 'UTF-8')) return $v;
+    return mb_convert_encoding($fixed, 'UTF-8', 'Windows-1252') === $v ? $fixed : $v;
+}
+
+// Each migration runs once. The schema version lives in legendary_meta,
+// so a normal request costs one SELECT instead of a schema inspection.
+const SCHEMA_VERSION = 3;
+
+function migrate(PDO $pdo) {
+    $row = $pdo->query("SELECT v FROM legendary_meta WHERE k = 'schema'")->fetch();
+    $version = $row ? (int)$row['v'] : 0;
+    if ($version >= SCHEMA_VERSION) return;
+
+    initTables($pdo);
+    $target = SCHEMA_VERSION;
+
+    if ($version < 1) {
+        // From the Marvel-only version: existing rows become 'marvel'.
+        foreach (['cards', 'games'] as $table) {
+            if (!hasColumn($pdo, $table, 'franchise')) {
+                $pdo->exec("ALTER TABLE `$table` ADD COLUMN franchise VARCHAR(32) NOT NULL DEFAULT 'marvel' AFTER id");
+            }
         }
     }
+    if ($version < 2 && !hasColumn($pdo, 'games', 'played_on')) {
+        $pdo->exec("ALTER TABLE games ADD COLUMN played_on DATE NULL AFTER name");
+    }
+    if ($version < 3) {
+        if (!function_exists('mb_convert_encoding')) {
+            $target = 2; // retry once mbstring is available
+        } else {
+            $text = ['cards' => ['expansion', 'type', 'name', 'comment'],
+                     'games' => ['expansion', 'name', 'comment', 'heroes', 'result']];
+            foreach ($text as $table => $cols) {
+                $rows = $pdo->query("SELECT id, " . implode(', ', $cols) . " FROM `$table`")->fetchAll(PDO::FETCH_ASSOC);
+                $stmt = $pdo->prepare("UPDATE `$table` SET " . implode(', ', array_map(fn($c) => "$c = ?", $cols)) . " WHERE id = ?");
+                foreach ($rows as $r) {
+                    $old = array_map(fn($c) => $r[$c], $cols);
+                    $new = array_map('repairMojibake', $old);
+                    if ($new !== $old) $stmt->execute(array_merge($new, [(int)$r['id']]));
+                }
+            }
+        }
+    }
+    $pdo->prepare("REPLACE INTO legendary_meta (k, v) VALUES ('schema', ?)")->execute([$target]);
 }
-initTables($pdo);
+
+try {
+    migrate($pdo);
+} catch (PDOException $e) {
+    // First run against the old database: legendary_meta does not exist yet.
+    initTables($pdo);
+    migrate($pdo);
+}
 
 function readBody() {
     $data = json_decode(file_get_contents('php://input'), true);
@@ -79,6 +140,7 @@ function readBody() {
 function requirePassword(array $data, string $expected) {
     $provided = (string)($data['password'] ?? '');
     if ($expected === '' || !hash_equals($expected, $provided)) {
+        sleep(1); // slows down password guessing
         http_response_code(401);
         echo json_encode(['error' => 'Invalid password']);
         exit;
@@ -99,6 +161,21 @@ function intOrNull($v) {
     return ($v === null || $v === '') ? null : (int)$v;
 }
 
+function ratingOf(array $data) {
+    $r = intOrNull($data['ranking'] ?? null);
+    return $r === null ? null : max(1, min(10, $r));
+}
+
+function dateOrNull($v) {
+    $v = (string)$v;
+    $d = DateTime::createFromFormat('!Y-m-d', $v);
+    return $d && $d->format('Y-m-d') === $v ? $v : null;
+}
+
+function text(array $data, string $key) {
+    return trim((string)($data[$key] ?? ''));
+}
+
 $action = $_GET['action'] ?? '';
 
 switch ($action) {
@@ -117,6 +194,7 @@ switch ($action) {
                 'franchise' => $g['franchise'],
                 'expansion' => $g['expansion'],
                 'name' => $g['name'],
+                'playedOn' => $g['played_on'],
                 'comment' => $g['comment'],
                 'ranking' => intOrNull($g['ranking']),
                 'victoryPile' => (int)$g['victory_pile'],
@@ -144,8 +222,8 @@ switch ($action) {
         $data = readBody();
         requirePassword($data, $config['edit_password']);
         $values = [
-            franchiseOf($data), $data['expansion'] ?? '', $data['type'] ?? '',
-            $data['name'] ?? '', $data['comment'] ?? '', intOrNull($data['ranking'] ?? null),
+            franchiseOf($data), text($data, 'expansion'), text($data, 'type'),
+            text($data, 'name'), text($data, 'comment'), ratingOf($data),
         ];
         if (!empty($data['id'])) {
             $stmt = $pdo->prepare("UPDATE cards SET franchise=?, expansion=?, type=?, name=?, comment=?, ranking=? WHERE id=?");
@@ -162,19 +240,19 @@ switch ($action) {
         $data = readBody();
         requirePassword($data, $config['edit_password']);
         $values = [
-            franchiseOf($data), $data['expansion'] ?? '', $data['name'] ?? '', $data['comment'] ?? '',
-            intOrNull($data['ranking'] ?? null),
+            franchiseOf($data), text($data, 'expansion'), text($data, 'name'), dateOrNull($data['playedOn'] ?? null),
+            text($data, 'comment'), ratingOf($data),
             (int)($data['victoryPile'] ?? 0), (int)($data['bystanders'] ?? 0), (int)($data['bystanderPenalty'] ?? 0),
             (int)($data['twists'] ?? 0), (int)($data['twistPenalty'] ?? 0),
             (int)($data['escaped'] ?? 0), (int)($data['escapePenalty'] ?? 0),
-            (int)($data['sum'] ?? 0), $data['heroes'] ?? '', $data['result'] ?? '',
+            (int)($data['sum'] ?? 0), text($data, 'heroes'), text($data, 'result'),
         ];
         if (!empty($data['id'])) {
-            $stmt = $pdo->prepare("UPDATE games SET franchise=?, expansion=?, name=?, comment=?, ranking=?, victory_pile=?, bystanders=?, bystander_penalty=?, twists=?, twist_penalty=?, villains_escaped=?, escape_penalty=?, total_score=?, heroes=?, result=? WHERE id=?");
+            $stmt = $pdo->prepare("UPDATE games SET franchise=?, expansion=?, name=?, played_on=?, comment=?, ranking=?, victory_pile=?, bystanders=?, bystander_penalty=?, twists=?, twist_penalty=?, villains_escaped=?, escape_penalty=?, total_score=?, heroes=?, result=? WHERE id=?");
             $stmt->execute(array_merge($values, [(int)$data['id']]));
             echo json_encode(['success' => true, 'id' => (int)$data['id']]);
         } else {
-            $stmt = $pdo->prepare("INSERT INTO games (franchise, expansion, name, comment, ranking, victory_pile, bystanders, bystander_penalty, twists, twist_penalty, villains_escaped, escape_penalty, total_score, heroes, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO games (franchise, expansion, name, played_on, comment, ranking, victory_pile, bystanders, bystander_penalty, twists, twist_penalty, villains_escaped, escape_penalty, total_score, heroes, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute($values);
             echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId()]);
         }
