@@ -1,1988 +1,785 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marvel Legendary Statistics</title>
-    <style>
-        :root {
-            --primary: #e62429;
-            --secondary: #518cca;
-            --dark: #1a1a2e;
-            --darker: #0f0f1a;
-            --light: #f5f5f5;
-            --gold: #ffd700;
-            --success: #28a745;
-            --danger: #dc3545;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
-            color: var(--light);
-            min-height: 100vh;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            text-align: center;
-            padding: 15px 20px 8px;
-            margin-bottom: 12px;
-            position: relative;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .logo-container {
-            display: inline-block;
-            position: relative;
-        }
-
-        header h1 {
-            font-size: 2.2em;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: -1px;
-            margin: 0;
-            color: #e62429;
-            text-shadow:
-                2px 2px 0 #000,
-                -1px -1px 0 #000,
-                1px -1px 0 #000,
-                -1px 1px 0 #000;
-            transform: skewX(-5deg);
-            display: inline-block;
-        }
-
-        header h1 span {
-            color: #fff;
-        }
-
-        header p {
-            font-size: 0.65em;
-            color: rgba(255, 255, 255, 0.4);
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-top: 3px;
-        }
-
-        .stats-dashboard {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 8px 15px;
-            border-radius: 6px;
-            text-align: center;
-            border-left: 3px solid var(--primary);
-            transition: transform 0.2s ease;
-        }
-
-        .stat-card:hover {
-            transform: scale(1.05);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .stat-card h3 {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.6em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 2px;
-        }
-
-        .stat-card .number {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #fff;
-        }
-
-        .stat-card.wins { border-left-color: var(--success); }
-        .stat-card.wins .number { color: var(--success); }
-        .stat-card.losses { border-left-color: var(--danger); }
-        .stat-card.losses .number { color: var(--danger); }
-
-        .filters {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .filter-group label {
-            font-size: 0.85em;
-            color: var(--secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        select, input[type="text"] {
-            padding: 10px 15px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            background: var(--darker);
-            color: var(--light);
-            font-size: 1em;
-            min-width: 180px;
-            cursor: pointer;
-            transition: border-color 0.3s ease;
-        }
-
-        select:hover, input[type="text"]:hover,
-        select:focus, input[type="text"]:focus {
-            border-color: var(--primary);
-            outline: none;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 0;
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .tab-btn {
-            padding: 12px 25px;
-            border: none;
-            background: transparent;
-            color: rgba(255, 255, 255, 0.5);
-            border-radius: 0;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -1px;
-        }
-
-        .tab-btn:hover {
-            color: var(--light);
-        }
-
-        .tab-btn.active {
-            color: var(--secondary);
-            border-bottom-color: var(--secondary);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        th {
-            background: transparent;
-            padding: 15px 12px;
-            text-align: left;
-            text-transform: uppercase;
-            font-size: 0.85em;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: color 0.3s ease;
-            white-space: nowrap;
-            color: var(--secondary);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        th:hover {
-            color: #6fa8dc;
-        }
-
-        th.sortable::after {
-            content: ' \2195';
-            opacity: 0.5;
-        }
-
-        td {
-            padding: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        tr:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        tr:nth-child(even) {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .rating {
-            display: inline-flex;
-            align-items: center;
-            gap: 2px;
-            font-size: 0.85em;
-        }
-
-        .rating .star {
-            color: #444;
-        }
-
-        .rating .star.filled {
-            color: var(--secondary);
-            text-shadow: 0 0 3px rgba(81, 140, 202, 0.5);
-        }
-
-        .rating-number {
-            margin-left: 5px;
-            color: rgba(255,255,255,0.5);
-            font-size: 0.85em;
-        }
-
-        .card-type {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.75em;
-            font-weight: 500;
-            text-transform: uppercase;
-            background: rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.8);
-        }
-
-        .expansion-tag {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            font-weight: 500;
-            color: #fff;
-        }
-
-        .result-win { color: var(--success); font-weight: bold; }
-        .result-loss { color: var(--danger); font-weight: bold; }
-
-        .score-positive { color: var(--success); }
-        .score-negative { color: var(--danger); }
-
-        .game-details {
-            font-size: 0.85em;
-            color: rgba(255, 255, 255, 0.7);
-            max-width: 300px;
-        }
-
-        .no-results {
-            text-align: center;
-            padding: 40px;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 1.2em;
-        }
-
-        @media (max-width: 768px) {
-            header h1 { font-size: 1.8em; }
-            .filters { flex-direction: column; }
-            select, input[type="text"] { width: 100%; }
-            table { font-size: 0.9em; }
-            td, th { padding: 8px 6px; }
-            .game-details { max-width: 150px; }
-        }
-
-        .charts-section {
-            margin-top: 30px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .chart-card {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .chart-card h3 {
-            color: var(--secondary);
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.95em;
-        }
-
-        .bar-chart {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .bar-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .bar-label {
-            width: 120px;
-            font-size: 0.85em;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .bar-container {
-            flex: 1;
-            height: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .bar-fill {
-            height: 100%;
-            background: var(--secondary);
-            border-radius: 10px;
-            transition: width 0.5s ease;
-        }
-
-        .bar-value {
-            width: 40px;
-            text-align: right;
-            font-weight: bold;
-            font-size: 0.9em;
-        }
-
-        footer {
-            text-align: center;
-            padding: 30px;
-            margin-top: 40px;
-            color: rgba(255, 255, 255, 0.5);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* Add Data Form Styles */
-        .form-section {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 20px;
-        }
-
-        .form-section h3 {
-            color: var(--secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.95em;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .form-group label {
-            font-size: 0.8em;
-            color: rgba(255, 255, 255, 0.6);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            padding: 10px 12px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            background: var(--darker);
-            color: var(--light);
-            font-size: 0.95em;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            border-color: var(--secondary);
-            outline: none;
-        }
-
-        .form-group.full-width {
-            grid-column: 1 / -1;
-        }
-
-        .btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background: var(--secondary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #6fa8dc;
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #ff6b6b;
-        }
-
-        .btn-cancel {
-            background: #6b7280;
-            color: white;
-            margin-left: 10px;
-        }
-
-        .btn-cancel:hover {
-            background: #9ca3af;
-        }
-
-        .form-actions {
-            margin-top: 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            background: var(--success);
-            color: white;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .toast.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        .data-count {
-            font-size: 0.85em;
-            color: rgba(255, 255, 255, 0.5);
-            margin-top: 10px;
-        }
-
-        .actions-header {
-            min-width: 80px;
-            text-align: center;
-        }
-
-        .actions-cell {
-            text-align: center;
-            color: #666;
-        }
-
-        .row-actions {
-            display: flex;
-            gap: 5px;
-            justify-content: center;
-        }
-
-        .btn-icon {
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85em;
-            transition: all 0.2s ease;
-        }
-
-        .btn-edit {
-            color: var(--secondary);
-        }
-
-        .btn-edit:hover {
-            background: rgba(81, 140, 202, 0.2);
-        }
-
-        .btn-delete {
-            color: var(--danger);
-        }
-
-        .btn-delete:hover {
-            background: rgba(220, 53, 69, 0.2);
-        }
-
-        .editing-mode .form-section h3::after {
-            content: ' (Editing)';
-            color: var(--secondary);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Legendary Score Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #101118;
+    --panel: #181a24;
+    --panel-2: #1f2230;
+    --line: #2c3042;
+    --text: #e9eaf0;
+    --muted: #8d91a6;
+    --win: #3ccf7a;
+    --loss: #ff5d5d;
+    --accent: #e62429;
+    --display: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+    --body: 'Barlow', 'Segoe UI', Arial, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: var(--body);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+}
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1400px; margin: 0 auto; padding: 0 20px 40px; }
+
+/* ---------- Header + game shelf ---------- */
+header.top {
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+    padding: 22px 0 14px;
+}
+.wordmark {
+    font-family: var(--display); font-weight: 800; font-size: 2.4rem;
+    letter-spacing: .02em; line-height: 1; text-transform: uppercase;
+    background: none; border: 0; cursor: pointer; color: var(--text);
+}
+.wordmark small { color: var(--accent); transition: color .2s; }
+header.top p { color: var(--muted); }
+
+.shelf {
+    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px;
+    border-bottom: 1px solid var(--line); margin-bottom: 22px;
+}
+.spine {
+    --c: #888;
+    position: relative; cursor: pointer; text-align: left;
+    background: var(--panel); border: 1px solid var(--line); border-bottom: 0;
+    border-top: 4px solid var(--c);
+    padding: 10px 12px 12px; border-radius: 4px 4px 0 0;
+    transform: translateY(6px); transition: transform .15s, background .15s;
+}
+.spine:hover { transform: translateY(2px); }
+.spine[aria-current="true"] { transform: translateY(0); background: var(--panel-2); }
+.spine .name {
+    display: block; font-family: var(--display); font-weight: 800;
+    font-size: 1.35rem; line-height: 1.05; text-transform: uppercase; color: var(--c);
+}
+.spine .meta { display: block; font-size: .8rem; color: var(--muted); margin-top: 4px; }
+
+/* ---------- Overview ---------- */
+.overview { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.ov-card {
+    --c: #888;
+    background: var(--panel); border: 1px solid var(--line); border-left: 6px solid var(--c);
+    border-radius: 6px; padding: 18px 20px; cursor: pointer; text-align: left;
+    display: flex; flex-direction: column; justify-content: flex-start;
+}
+.ov-card:hover { background: var(--panel-2); }
+.ov-card h2 { font-family: var(--display); font-weight: 800; font-size: 1.9rem; text-transform: uppercase; color: var(--c); line-height: 1; }
+.ov-card .full { color: var(--muted); font-size: .9rem; margin: 4px 0 14px; }
+.ov-nums { display: flex; gap: 22px; }
+.ov-nums b { display: block; font-family: var(--display); font-size: 1.8rem; line-height: 1; }
+.ov-nums span { font-size: .8rem; color: var(--muted); white-space: nowrap; }
+.ov-empty { color: var(--muted); font-size: .9rem; }
+.ov-recent { margin-top: 14px; font-size: .85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+.ov-recent strong { color: var(--text); font-weight: 500; }
+
+/* ---------- Franchise view ---------- */
+.dash { display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; }
+.stat span { font-size: .8rem; color: var(--muted); }
+.stat b { display: block; font-family: var(--display); font-weight: 800; font-size: 2rem; line-height: 1.1; }
+.stat.win b { color: var(--win); }
+.stat.loss b { color: var(--loss); }
+.stat.hi b { color: var(--accent); }
+
+.filters { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.filters label { display: flex; flex-direction: column; gap: 4px; font-size: .8rem; color: var(--muted); flex: 1 1 160px; }
+input, select {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 4px;
+    padding: 8px 10px; width: 100%;
+}
+input:focus, select:focus { border-color: var(--accent); outline: none; }
+
+.tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--line); margin-bottom: 16px; overflow-x: auto; }
+.tab {
+    background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -2px;
+    padding: 10px 16px; cursor: pointer; color: var(--muted); font-weight: 600; white-space: nowrap;
+}
+.tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+.panel[hidden] { display: none; }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { background: var(--panel-2); color: var(--muted); font-weight: 600; font-size: .8rem; white-space: nowrap; }
+th.sortable { cursor: pointer; }
+th.sortable:hover { color: var(--text); }
+th.sorted::after { content: ' ▲'; color: var(--accent); }
+th.sorted.desc::after { content: ' ▼'; }
+tbody tr:hover { background: rgba(255,255,255,.03); }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pen { color: var(--loss); font-size: .85em; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: .8rem; font-weight: 600; color: #fff; white-space: nowrap; text-shadow: 0 1px 1px rgba(0,0,0,.35); }
+.type { color: var(--muted); font-size: .85rem; }
+.rating { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.pips { display: inline-flex; gap: 2px; }
+.pips i { width: 6px; height: 12px; background: var(--line); border-radius: 1px; }
+.pips i.on { background: var(--accent); }
+.rating b { font-family: var(--display); font-size: 1.1rem; }
+.res-win { color: var(--win); font-weight: 600; }
+.res-loss { color: var(--loss); font-weight: 600; }
+.muted { color: var(--muted); font-weight: 400; }
+.empty { text-align: center; color: var(--muted); padding: 36px 12px; }
+.row-actions { display: flex; gap: 4px; }
+.icon-btn { background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; width: 30px; height: 30px; cursor: pointer; }
+.icon-btn:hover { border-color: var(--accent); }
+
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.chart { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; }
+.chart h3 { font-family: var(--display); font-weight: 600; font-size: 1.2rem; margin-bottom: 12px; }
+.bar { display: grid; grid-template-columns: 130px 1fr 34px; align-items: center; gap: 10px; margin-bottom: 7px; font-size: .88rem; }
+.bar .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar .track { height: 10px; background: var(--panel-2); border-radius: 2px; }
+.bar .fill { height: 100%; background: var(--accent); border-radius: 2px; }
+.bar .val { text-align: right; font-variant-numeric: tabular-nums; }
+
+.form-box { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px; margin-bottom: 16px; }
+.form-box.editing { border-color: var(--accent); }
+.form-box h3 { font-family: var(--display); font-weight: 600; font-size: 1.3rem; margin-bottom: 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.grid label { display: flex; flex-direction: column; gap: 4px; font-size: .82rem; color: var(--muted); }
+.grid .wide { grid-column: 1 / -1; }
+.score-preview { font-size: .9rem; color: var(--muted); margin-top: 10px; }
+.score-preview b { color: var(--text); font-family: var(--display); font-size: 1.3rem; }
+.actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--panel-2); border-radius: 4px; padding: 9px 16px; cursor: pointer; font-weight: 600; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #111; }
+.btn:hover { filter: brightness(1.1); }
+
+.toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(120px);
+    background: var(--panel-2); border: 1px solid var(--accent); padding: 10px 18px; border-radius: 6px;
+    transition: transform .25s; z-index: 10;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+footer { color: var(--muted); font-size: .8rem; margin-top: 36px; }
+
+@media (max-width: 900px) {
+    .shelf { grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 0; }
+    .spine { transform: none; border-bottom: 1px solid var(--line); border-radius: 4px; }
+    .spine:hover { transform: none; }
+}
+@media (max-width: 500px) {
+    .shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .bar { grid-template-columns: 100px 1fr 30px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo-container">
-                <h1><span>MARVEL</span> LEGENDARY</h1>
-            </div>
-            <p>Game Statistics & Card Database</p>
-        </header>
+<div class="wrap">
+    <header class="top">
+        <button class="wordmark" id="homeBtn" title="All games">Legendary <small id="wordmarkSub">Score Board</small></button>
+        <p id="tagline">Every game, every expansion, every result.</p>
+    </header>
 
-        <div class="stats-dashboard" id="statsDashboard">
-            <!-- Stats will be populated by JavaScript -->
-        </div>
+    <nav class="shelf" id="shelf" aria-label="Choose game"></nav>
+
+    <!-- Overview: all games -->
+    <section id="overviewView">
+        <div class="overview" id="overviewGrid"></div>
+    </section>
+
+    <!-- One game -->
+    <section id="franchiseView" hidden>
+        <div class="dash" id="dash"></div>
 
         <div class="filters">
-            <div class="filter-group">
-                <label>Expansion</label>
-                <select id="filterExpansion">
-                    <option value="">All Expansions</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Card Type</label>
-                <select id="filterType">
-                    <option value="">All Types</option>
-                    <option value="Hero">Heroes</option>
-                    <option value="Mastermind">Masterminds</option>
-                    <option value="Scheme">Schemes</option>
-                    <option value="Villain">Villains</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Search</label>
-                <input type="text" id="searchInput" placeholder="Search cards..." oninput="filterData()" onkeyup="filterData()">
-            </div>
-            <div class="filter-group">
-                <label>Min Rating</label>
-                <select id="filterRating">
-                    <option value="">Any Rating</option>
-                    <option value="9">9+</option>
-                    <option value="8">8+</option>
-                    <option value="7">7+</option>
-                    <option value="6">6+</option>
-                    <option value="5">5+</option>
-                </select>
-            </div>
+            <label>Expansion<select id="fExpansion"></select></label>
+            <label>Card type<select id="fType"></select></label>
+            <label>Search<input type="search" id="fSearch" placeholder="Name, comment, expansion"></label>
+            <label>Min rating<select id="fRating">
+                <option value="">Any</option><option value="9">9+</option><option value="8">8+</option>
+                <option value="7">7+</option><option value="6">6+</option><option value="5">5+</option>
+            </select></label>
         </div>
 
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="cards">All Cards</button>
-            <button class="tab-btn" data-tab="games">Game Results</button>
-            <button class="tab-btn" data-tab="stats">Statistics</button>
-            <button class="tab-btn" data-tab="addData">+ Add Data</button>
+        <div class="tabs" role="tablist">
+            <button class="tab" role="tab" data-tab="games" aria-selected="true">Game results</button>
+            <button class="tab" role="tab" data-tab="cards" aria-selected="false">Cards</button>
+            <button class="tab" role="tab" data-tab="stats" aria-selected="false">Statistics</button>
+            <button class="tab" role="tab" data-tab="add" aria-selected="false">+ Add</button>
         </div>
 
-        <div id="cardsTab" class="tab-content active">
-            <table id="cardsTable">
-                <thead>
-                    <tr>
-                        <th class="sortable" data-sort="expansion">Expansion</th>
-                        <th class="sortable" data-sort="type">Type</th>
-                        <th class="sortable" data-sort="name">Name</th>
-                        <th class="sortable" data-sort="comment">Comment</th>
-                        <th class="sortable" data-sort="ranking">Rating</th>
-                        <th class="actions-header">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="cardsBody">
-                </tbody>
-            </table>
+        <div class="panel" id="panel-games">
+            <div class="table-wrap"><table>
+                <thead id="gamesHead"></thead>
+                <tbody id="gamesBody"></tbody>
+            </table></div>
         </div>
 
-        <div id="gamesTab" class="tab-content">
-            <table id="gamesTable">
-                <thead>
-                    <tr>
-                        <th class="sortable" data-sort="expansion">Expansion</th>
-                        <th class="sortable" data-sort="name">Scheme</th>
-                        <th class="sortable" data-sort="victoryPile">Victory Pile</th>
-                        <th>Bystanders (Penalty)</th>
-                        <th>Twists (Penalty)</th>
-                        <th>Escaped (Penalty)</th>
-                        <th class="sortable" data-sort="sum">Total Score</th>
-                        <th>Heroes Used</th>
-                        <th>Result</th>
-                        <th class="actions-header">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="gamesBody">
-                </tbody>
-            </table>
+        <div class="panel" id="panel-cards" hidden>
+            <div class="table-wrap"><table>
+                <thead><tr>
+                    <th class="sortable" data-sort="expansion">Expansion</th>
+                    <th class="sortable" data-sort="type">Type</th>
+                    <th class="sortable" data-sort="name">Name</th>
+                    <th>Comment</th>
+                    <th class="sortable" data-sort="ranking">Rating</th>
+                    <th></th>
+                </tr></thead>
+                <tbody id="cardsBody"></tbody>
+            </table></div>
         </div>
 
-        <div id="statsTab" class="tab-content">
-            <div class="charts-section">
-                <div class="chart-card">
-                    <h3>Top Rated Heroes</h3>
-                    <div class="bar-chart" id="topHeroesChart"></div>
+        <div class="panel" id="panel-stats" hidden>
+            <div class="charts" id="charts"></div>
+        </div>
+
+        <div class="panel" id="panel-add" hidden>
+            <form class="form-box" id="gameForm">
+                <h3 id="gameFormTitle">Add game result</h3>
+                <div class="grid">
+                    <label>Expansion<input id="gExpansion" list="expansionList" required></label>
+                    <label><span id="gNameLabel">Scheme</span><input id="gName" required></label>
+                    <label>Rating (1–10)<input id="gRating" type="number" min="1" max="10"></label>
+                    <label>Result<select id="gResult">
+                        <option value="">–</option><option value="Vann">Win</option><option value="Förlorade">Loss</option>
+                    </select></label>
                 </div>
-                <div class="chart-card">
-                    <h3>Top Rated Schemes</h3>
-                    <div class="bar-chart" id="topSchemesChart"></div>
+                <div class="grid" id="detailedScore" style="margin-top:12px">
+                    <label>Victory pile<input id="gVictory" type="number" min="0" value="0"></label>
+                    <label>Bystanders carried away<input id="gBystanders" type="number" min="0" value="0"></label>
+                    <label>Scheme twists<input id="gTwists" type="number" min="0" value="0"></label>
+                    <label>Villains escaped<input id="gEscaped" type="number" min="0" value="0"></label>
                 </div>
-                <div class="chart-card">
-                    <h3>Top Rated Masterminds</h3>
-                    <div class="bar-chart" id="topMastermindsChart"></div>
+                <div class="grid" id="simpleScore" style="margin-top:12px">
+                    <label>Score (optional)<input id="gScore" type="number"></label>
                 </div>
-                <div class="chart-card">
-                    <h3>Expansions by Avg Rating</h3>
-                    <div class="bar-chart" id="expansionRatingsChart"></div>
+                <p class="score-preview" id="scorePreview"></p>
+                <div class="grid" style="margin-top:12px">
+                    <label class="wide"><span id="gHeroesLabel">Heroes & mastermind used</span><input id="gHeroes"></label>
+                    <label class="wide">Comment<input id="gComment" placeholder="How did it go?"></label>
+                </div>
+                <div class="actions">
+                    <button class="btn primary" type="submit" id="gameSubmit">Add result</button>
+                    <button class="btn" type="button" id="gameCancel" hidden>Cancel</button>
+                </div>
+            </form>
+
+            <form class="form-box" id="cardForm">
+                <h3 id="cardFormTitle">Add card</h3>
+                <div class="grid">
+                    <label>Expansion<input id="cExpansion" list="expansionList" required></label>
+                    <label>Type<select id="cType"></select></label>
+                    <label>Name<input id="cName" required></label>
+                    <label>Rating (1–10)<input id="cRating" type="number" min="1" max="10"></label>
+                    <label class="wide">Comment<input id="cComment"></label>
+                </div>
+                <div class="actions">
+                    <button class="btn primary" type="submit" id="cardSubmit">Add card</button>
+                    <button class="btn" type="button" id="cardCancel" hidden>Cancel</button>
+                </div>
+            </form>
+
+            <div class="form-box">
+                <h3>Data</h3>
+                <p class="muted" id="dataCount"></p>
+                <div class="actions">
+                    <button class="btn" type="button" id="exportBtn">Export this game (JSON)</button>
+                    <button class="btn" type="button" id="exportAllBtn">Export everything (JSON)</button>
+                    <button class="btn" type="button" id="logoutBtn">Forget edit password</button>
                 </div>
             </div>
+            <datalist id="expansionList"></datalist>
         </div>
+    </section>
 
-        <div id="addDataTab" class="tab-content">
-            <div class="form-section">
-                <h3>Add Card (Hero, Mastermind, Scheme, or Villain)</h3>
-                <form id="cardForm">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Expansion</label>
-                            <input type="text" id="cardExpansion" required placeholder="e.g., X-Men">
-                        </div>
-                        <div class="form-group">
-                            <label>Type</label>
-                            <select id="cardType" required>
-                                <option value="Hero">Hero</option>
-                                <option value="Mastermind">Mastermind</option>
-                                <option value="Scheme">Scheme</option>
-                                <option value="Villain">Villain</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Name</label>
-                            <input type="text" id="cardName" required placeholder="Card name">
-                        </div>
-                        <div class="form-group">
-                            <label>Rating (1-10)</label>
-                            <input type="number" id="cardRating" min="1" max="10" placeholder="7">
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Comment</label>
-                            <input type="text" id="cardComment" placeholder="Your thoughts...">
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Add Card</button>
-                        <button type="button" class="btn btn-cancel" onclick="resetCardForm()" style="display:none;">Cancel</button>
-                    </div>
-                </form>
-            </div>
+    <footer>Legendary score board · globbin.se</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
 
-            <div class="form-section">
-                <h3>Add Game Result</h3>
-                <form id="gameForm">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Expansion</label>
-                            <input type="text" id="gameExpansion" required placeholder="e.g., X-Men">
-                        </div>
-                        <div class="form-group">
-                            <label>Scheme Name</label>
-                            <input type="text" id="gameName" required placeholder="Scheme name">
-                        </div>
-                        <div class="form-group">
-                            <label>Rating (1-10)</label>
-                            <input type="number" id="gameRating" min="1" max="10" placeholder="7">
-                        </div>
-                        <div class="form-group">
-                            <label>Victory Pile</label>
-                            <input type="number" id="gameVictoryPile" min="0" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Bystanders Carried Away</label>
-                            <input type="number" id="gameBystanders" min="0" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Scheme Twists</label>
-                            <input type="number" id="gameTwists" min="0" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Villains Escaped</label>
-                            <input type="number" id="gameEscaped" min="0" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Result</label>
-                            <select id="gameResult">
-                                <option value="">-</option>
-                                <option value="Vann">Win</option>
-                                <option value="Förlorade">Loss</option>
-                            </select>
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Heroes & Mastermind Used</label>
-                            <input type="text" id="gameHeroes" placeholder="e.g., Wolverine, Storm, Magneto">
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Comment</label>
-                            <input type="text" id="gameComment" placeholder="Notes about the game...">
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Add Game Result</button>
-                        <button type="button" class="btn btn-cancel" onclick="resetGameForm()" style="display:none;">Cancel</button>
-                    </div>
-                </form>
-            </div>
+<script>
+/* ============================================================
+   Game configuration. Change labels, card types or scoring here.
+   scoring: 'detailed' = victory pile minus penalties (Marvel rules)
+            'simple'   = win/loss plus an optional score number
+   ============================================================ */
+const FRANCHISES = {
+    marvel:   { short: 'Marvel',   full: 'Marvel Legendary',            color: '#e62429', scoring: 'detailed',
+                types: ['Hero', 'Mastermind', 'Scheme', 'Villain'], scenario: 'Scheme',  used: 'Heroes & mastermind used' },
+    alien:    { short: 'Alien',    full: 'Legendary Encounters: Alien',  color: '#45c4c9', scoring: 'simple',
+                types: ['Hero', 'Mastermind', 'Scheme', 'Villain'], scenario: 'Scenario', used: 'Characters used' },
+    bond:     { short: 'James Bond', full: 'Legendary: James Bond 007', color: '#d4d9e0', scoring: 'detailed',
+                types: ['Hero', 'Mastermind', 'Scheme', 'Villain'], scenario: 'Scheme',  used: 'Heroes & mastermind used' },
+    predator: { short: 'Predator', full: 'Legendary Encounters: Predator', color: '#f2c230', scoring: 'simple',
+                types: ['Hero', 'Mastermind', 'Scheme', 'Villain'], scenario: 'Scenario', used: 'Characters used' },
+    matrix:   { short: 'Matrix',   full: 'Legendary: The Matrix',        color: '#2fd16b', scoring: 'detailed',
+                types: ['Hero', 'Mastermind', 'Scheme', 'Villain'], scenario: 'Scheme',  used: 'Heroes & mastermind used' },
+    firefly:  { short: 'Firefly',  full: 'Legendary: Firefly',           color: '#e08a3a', scoring: 'simple',
+                types: ['Hero', 'Mastermind', 'Scheme', 'Villain'], scenario: 'Story',   used: 'Crew used' },
+};
+const PENALTY = { bystander: -4, twist: -3, escaped: -1 };
 
-            <div class="form-section">
-                <h3>Manage Data</h3>
-                <p class="data-count" id="dataCount">Connecting to database...</p>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-primary" onclick="importInitialData()">Import Initial Dataset</button>
-                    <button type="button" class="btn btn-primary" onclick="exportData()">Export Data (JSON)</button>
-                </div>
-            </div>
-        </div>
+const MARVEL_EXPANSION_COLORS = {
+    "Annihilation": "#8B5CF6", "Ant-Man": "#EF4444", "Black Panther": "#6366F1", "Black Widow": "#EC4899",
+    "Captain America": "#3B82F6", "Champions": "#F59E0B", "Civil War": "#6B7280", "Core set": "#10B981",
+    "Dark City": "#7C3AED", "Deadpool": "#DC2626", "Dimensions": "#14B8A6", "Doctor Strange": "#8B5CF6",
+    "Fantastic Four": "#0EA5E9", "Heroes of Asgard": "#B8860B", "Into the cosmos": "#6366F1", "Midnight Sons": "#4B5563",
+    "New Mutants": "#DB2777", "Noir": "#374151", "Paint the town red": "#EF4444", "Realm of Kings": "#A855F7",
+    "Revelations": "#16A34A", "S.H.I.E.L.D.S.": "#0284C7", "Secret Wars 2": "#EA580C", "Secret Wars vol1": "#F97316",
+    "Secret Wars vol2": "#C2410C", "Venom": "#1F2937", "World war Hulk": "#15803D", "X-Men": "#CA8A04"
+};
+const PALETTE = ['#8B5CF6', '#EF4444', '#3B82F6', '#F59E0B', '#10B981', '#EC4899', '#0EA5E9', '#7C3AED', '#14B8A6', '#EA580C', '#6366F1', '#DC2626'];
 
-        <div id="toast" class="toast"></div>
+const API_URL = 'api.php';
+let cards = [], games = [];
+let current = null;              // franchise key or null for overview
+let activeTab = 'games';
+let sortState = { cards: { col: null, dir: 1 }, games: { col: null, dir: 1 } };
+let editingCardId = null, editingGameId = null;
 
-        <footer>
-            <p>Marvel Legendary Statistics Tracker</p>
-        </footer>
-    </div>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const cfg = () => FRANCHISES[current];
 
-    <script>
-        // API endpoint
-        const API_URL = 'api.php';
+function expansionColor(exp) {
+    if (current === 'marvel' && MARVEL_EXPANSION_COLORS[exp]) return MARVEL_EXPANSION_COLORS[exp];
+    let h = 0;
+    for (const ch of String(exp)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return PALETTE[h % PALETTE.length];
+}
+function isWin(result) {
+    if (!result) return null;
+    const r = result.toLowerCase();
+    if (r.includes('vann') || r.includes('win')) return true;
+    if (r.includes('förlor') || r.includes('lost') || r.includes('loss')) return false;
+    return null;
+}
+function ratingHtml(n) {
+    if (!n) return '<span class="muted">–</span>';
+    let pips = '';
+    for (let i = 1; i <= 10; i++) pips += `<i class="${i <= n ? 'on' : ''}"></i>`;
+    return `<span class="rating"><span class="pips" aria-hidden="true">${pips}</span><b>${n}</b></span>`;
+}
+function plural(t) { return t.endsWith('s') ? t : /o$/i.test(t) ? t + 'es' : t + 's'; }
+function toast(msg) {
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast.timer); toast.timer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function summarize(list) {
+    const wins = list.filter(g => isWin(g.result) === true).length;
+    const losses = list.filter(g => isWin(g.result) === false).length;
+    const decided = wins + losses;
+    const scored = list.filter(g => g.sum !== 0);
+    return {
+        played: list.length, wins, losses,
+        rate: decided ? Math.round(wins / decided * 100) + '%' : '–',
+        high: scored.length ? Math.max(...scored.map(g => g.sum)) : '–',
+    };
+}
 
-        // Password handling
-        function getPassword() {
-            let password = localStorage.getItem('editPassword');
-            if (!password) {
-                password = prompt('Enter edit password:');
-                if (password) {
-                    localStorage.setItem('editPassword', password);
-                }
-            }
-            return password;
-        }
+/* ---------- Navigation ---------- */
+function renderShelf() {
+    $('shelf').innerHTML = Object.entries(FRANCHISES).map(([key, f]) => {
+        const n = games.filter(g => g.franchise === key).length;
+        return `<button class="spine" style="--c:${f.color}" data-f="${key}" aria-current="${key === current}">
+            <span class="name">${esc(f.short)}</span>
+            <span class="meta">${n} ${n === 1 ? 'game' : 'games'}</span></button>`;
+    }).join('');
+}
+function go(key) { location.hash = key ? key : ''; if (!key) route(); }
+function route() {
+    const key = location.hash.slice(1);
+    current = FRANCHISES[key] ? key : null;
+    document.documentElement.style.setProperty('--accent', current ? cfg().color : '#e62429');
+    $('wordmarkSub').textContent = current ? cfg().short : 'Score Board';
+    $('tagline').textContent = current ? cfg().full : 'Every game, every expansion, every result.';
+    document.title = current ? `${cfg().full} · Score Board` : 'Legendary Score Board';
+    renderShelf();
+    $('overviewView').hidden = !!current;
+    $('franchiseView').hidden = !current;
+    if (current) enterFranchise(); else renderOverview();
+}
 
-        function clearPassword() {
-            localStorage.removeItem('editPassword');
-            showToast('Password cleared');
-        }
+/* ---------- Overview ---------- */
+function renderOverview() {
+    $('overviewGrid').innerHTML = Object.entries(FRANCHISES).map(([key, f]) => {
+        const list = games.filter(g => g.franchise === key);
+        const nCards = cards.filter(c => c.franchise === key).length;
+        const s = summarize(list);
+        const last = [...list].sort((a, b) => b.id - a.id)[0];
+        const body = list.length || nCards
+            ? `<div class="ov-nums">
+                 <div><b>${s.played}</b><span>played</span></div>
+                 <div><b>${s.rate}</b><span>win rate</span></div>
+                 <div><b>${s.high}</b><span>high score</span></div>
+                 <div><b>${nCards}</b><span>cards rated</span></div>
+               </div>
+               ${last ? `<div class="ov-recent">Latest: <strong>${esc(last.name)}</strong> (${esc(last.expansion)})</div>` : ''}`
+            : `<p class="ov-empty">No games logged yet. Open it to add the first one.</p>`;
+        return `<button class="ov-card" style="--c:${f.color}" data-f="${key}">
+            <h2>${esc(f.short)}</h2><p class="full">${esc(f.full)}</p>${body}</button>`;
+    }).join('');
+}
 
-        // Active data arrays (loaded from database)
-        let cardData = [];
-        let gameData = [];
+/* ---------- Franchise view ---------- */
+function myCards() { return cards.filter(c => c.franchise === current); }
+function myGames() { return games.filter(g => g.franchise === current); }
 
-        // Initial data for first-time import
-        const INITIAL_CARD_DATA = [
-            { expansion: "Annihilation", type: "Hero", name: "Brainstorm", comment: "Kul", ranking: 7 },
-            { expansion: "Annihilation", type: "Hero", name: "PSI-Lord", comment: "Ok", ranking: 6 },
-            { expansion: "Annihilation", type: "Hero", name: "Fantastic Four United", comment: "Ok", ranking: 6 },
-            { expansion: "Annihilation", type: "Hero", name: "Super-Skrull", comment: "Kul", ranking: 9 },
-            { expansion: "Annihilation", type: "Hero", name: "Heralds of Galactus", comment: "Vill prova igen", ranking: 7 },
-            { expansion: "Annihilation", type: "Mastermind", name: "Kang the Conqueror", comment: "Kul", ranking: 8 },
-            { expansion: "Annihilation", type: "Mastermind", name: "Annihilus", comment: "Kul", ranking: 8 },
-            { expansion: "Ant-Man", type: "Hero", name: "Ant-Man", comment: "Bra. Size-Changing känns lite för bra", ranking: 7 },
-            { expansion: "Ant-Man", type: "Hero", name: "Jocasta", comment: "Bra. Size-Changing känns lite för bra", ranking: 7 },
-            { expansion: "Ant-Man", type: "Hero", name: "Wasp", comment: "Vet ej riktigt", ranking: 6 },
-            { expansion: "Ant-Man", type: "Hero", name: "Wonder Man", comment: "Bra", ranking: 6 },
-            { expansion: "Ant-Man", type: "Mastermind", name: "Ultron", comment: "Ok", ranking: 6 },
-            { expansion: "Black Panther", type: "Mastermind", name: "Killmonger", comment: "Ok", ranking: 7 },
-            { expansion: "Black Panther", type: "Hero", name: "King Black Panther", comment: "Kul", ranking: 8 },
-            { expansion: "Black Panther", type: "Hero", name: "Princess Shuri", comment: "Bra", ranking: 7 },
-            { expansion: "Black Panther", type: "Hero", name: "Queen Storm of Wakanda", comment: "Ok", ranking: 7 },
-            { expansion: "Black Panther", type: "Mastermind", name: "Klaw", comment: "Rörig men kul när man fattar", ranking: 7 },
-            { expansion: "Black Panther", type: "Hero", name: "White Wolf", comment: "Kul", ranking: 8 },
-            { expansion: "Black Panther", type: "Hero", name: "General Okoye", comment: "Kul", ranking: 8 },
-            { expansion: "Black Widow", type: "Mastermind", name: "Indestructible Man", comment: "Kul", ranking: 8 },
-            { expansion: "Black Widow", type: "Hero", name: "Black Widow", comment: "Ok", ranking: 6 },
-            { expansion: "Black Widow", type: "Hero", name: "Yelena Belova", comment: "Kul", ranking: 8 },
-            { expansion: "Black Widow", type: "Hero", name: "Red Guardian", comment: "Kul", ranking: 7 },
-            { expansion: "Black Widow", type: "Hero", name: "White Tiger", comment: "Vet ej riktigt", ranking: 6 },
-            { expansion: "Black Widow", type: "Hero", name: "Falcon & Winter Soldier", comment: "Nja", ranking: 5 },
-            { expansion: "Black Widow", type: "Mastermind", name: "Taskmaster", comment: "Kul, myckat att hålla koll på", ranking: 7 },
-            { expansion: "Captain America", type: "Hero", name: "Winter Soldier", comment: "Kul", ranking: 8 },
-            { expansion: "Captain America", type: "Hero", name: "Captain America Falcon", comment: "Ok", ranking: 5 },
-            { expansion: "Captain America", type: "Hero", name: "Agent x-13", comment: "Ok", ranking: 7 },
-            { expansion: "Captain America", type: "Hero", name: "Steve Roger, Director of S.H.I.E.L.D", comment: "Ok", ranking: 6 },
-            { expansion: "Captain America", type: "Hero", name: "Captain America 1941", comment: "Ok", ranking: 6 },
-            { expansion: "Captain America", type: "Mastermind", name: "Baron Heinrich Zemo", comment: "Lätt", ranking: 6 },
-            { expansion: "Captain America", type: "Mastermind", name: "Arnim Zola", comment: "Kul", ranking: 7 },
-            { expansion: "Champions", type: "Hero", name: "Ms. Marvel", comment: "Kul", ranking: 8 },
-            { expansion: "Champions", type: "Hero", name: "Nova", comment: "Ok", ranking: 6 },
-            { expansion: "Champions", type: "Hero", name: "Viv Vision", comment: "Kul", ranking: 7 },
-            { expansion: "Champions", type: "Mastermind", name: "Pagliacci", comment: "Rätt tråkig", ranking: 5 },
-            { expansion: "Civil War", type: "Hero", name: "Cloak & Dagger", comment: "Tråkig", ranking: 2 },
-            { expansion: "Civil War", type: "Hero", name: "Dare Devil & Iron Fist", comment: "Ok", ranking: 3 },
-            { expansion: "Civil War", type: "Hero", name: "Falcon", comment: "Gillar ej Civil War", ranking: 3 },
-            { expansion: "Civil War", type: "Hero", name: "Hercules", comment: "Gillar ej Civil War", ranking: 3 },
-            { expansion: "Civil War", type: "Hero", name: "Luke Cage", comment: "Gillar ej Civil War", ranking: 3 },
-            { expansion: "Civil War", type: "Hero", name: "Patriot", comment: "Gillar ej Civil War", ranking: 3 },
-            { expansion: "Civil War", type: "Hero", name: "Peter Parker", comment: "Tråkig", ranking: 2 },
-            { expansion: "Civil War", type: "Hero", name: "Speedball", comment: "Gillar ej Civil War", ranking: 3 },
-            { expansion: "Civil War", type: "Hero", name: "Tigra", comment: "Gillar ej Civil War", ranking: 3 },
-            { expansion: "Civil War", type: "Hero", name: "Wiccan", comment: "Gillar ej Civil War", ranking: 3 },
-            { expansion: "Civil War", type: "Mastermind", name: "Maria Hill, Direktor of S.H.I.E.L.D.", comment: "Borde prova igen", ranking: 5 },
-            { expansion: "Civil War", type: "Mastermind", name: "Misty Knight", comment: "Tråkig", ranking: 2 },
-            { expansion: "Core set", type: "Mastermind", name: "Magneto", comment: "Lätt", ranking: 6 },
-            { expansion: "Core set", type: "Mastermind", name: "Red Skull", comment: "Lätt", ranking: 6 },
-            { expansion: "Core set", type: "Mastermind", name: "Loke", comment: "Ok", ranking: 6 },
-            { expansion: "Core set", type: "Mastermind", name: "Stryfe", comment: "Ok", ranking: 6 },
-            { expansion: "Core set", type: "Hero", name: "Hawkeye", comment: "Ok", ranking: 6 },
-            { expansion: "Core set", type: "Hero", name: "Nick Fury", comment: "Ok", ranking: 7 },
-            { expansion: "Core set", type: "Hero", name: "Black Widow", comment: "Ok", ranking: 6 },
-            { expansion: "Core set", type: "Hero", name: "Wolverine", comment: "Kul", ranking: 7 },
-            { expansion: "Core set", type: "Hero", name: "Storm", comment: "Ok", ranking: 5 },
-            { expansion: "Core set", type: "Hero", name: "Rogue", comment: "Ok", ranking: 5 },
-            { expansion: "Core set", type: "Hero", name: "Hulk", comment: "Ok", ranking: 6 },
-            { expansion: "Core set", type: "Hero", name: "Thor", comment: "Ok", ranking: 6 },
-            { expansion: "Core set", type: "Hero", name: "Deadpool", comment: "Trist", ranking: 4 },
-            { expansion: "Core set", type: "Hero", name: "Emma Frost", comment: "Ok", ranking: 6 },
-            { expansion: "Core set", type: "Hero", name: "Gambit", comment: "Trist", ranking: 4 },
-            { expansion: "Dark City", type: "Hero", name: "Angel", comment: "Jättebra", ranking: 9 },
-            { expansion: "Dark City", type: "Hero", name: "Bishop", comment: "Ok", ranking: 5 },
-            { expansion: "Dark City", type: "Hero", name: "Blade", comment: "Tråkig", ranking: 4 },
-            { expansion: "Dark City", type: "Hero", name: "Cable", comment: "Ok", ranking: 6 },
-            { expansion: "Dark City", type: "Hero", name: "Colossus", comment: "Trist", ranking: 4 },
-            { expansion: "Dark City", type: "Hero", name: "Daredevil", comment: "För mycket slump", ranking: 3 },
-            { expansion: "Dark City", type: "Hero", name: "Domino", comment: "Jättebra", ranking: 8 },
-            { expansion: "Dark City", type: "Hero", name: "Elektra", comment: "Trist", ranking: 3 },
-            { expansion: "Dark City", type: "Hero", name: "Forge", comment: "Trist", ranking: 4 },
-            { expansion: "Dark City", type: "Hero", name: "Ghost Rider", comment: "Dålig i början, kul senare", ranking: 6 },
-            { expansion: "Dark City", type: "Hero", name: "Iceman", comment: "Jättebra", ranking: 10 },
-            { expansion: "Dark City", type: "Hero", name: "Iron Fist", comment: "Ok", ranking: 7 },
-            { expansion: "Dark City", type: "Hero", name: "Jean Grey", comment: "Kul", ranking: 7 },
-            { expansion: "Dark City", type: "Hero", name: "Nightcrawler", comment: "Kul", ranking: 6 },
-            { expansion: "Dark City", type: "Hero", name: "Professor X", comment: "Trist", ranking: 5 },
-            { expansion: "Dark City", type: "Hero", name: "Punisher", comment: "Trist", ranking: 4 },
-            { expansion: "Dark City", type: "Mastermind", name: "Apocalypse", comment: "Omöjlig", ranking: 6 },
-            { expansion: "Dark City", type: "Mastermind", name: "Kingpin", comment: "Basic", ranking: 5 },
-            { expansion: "Dark City", type: "Mastermind", name: "Mephisto", comment: "Kul", ranking: 8 },
-            { expansion: "Dark City", type: "Mastermind", name: "Mr. Sinister", comment: "Lätt", ranking: 5 },
-            { expansion: "Dark City", type: "Mastermind", name: "Stryfe", comment: "Klen", ranking: 5 },
-            { expansion: "Deadpool", type: "Hero", name: "Deadpool", comment: "Kul", ranking: 7 },
-            { expansion: "Deadpool", type: "Hero", name: "Solo", comment: "Lite tråkig", ranking: 4 },
-            { expansion: "Deadpool", type: "Hero", name: "Stingray", comment: "Ok", ranking: 7 },
-            { expansion: "Deadpool", type: "Mastermind", name: "Macho Gomez", comment: "Kul", ranking: 8 },
-            { expansion: "Dimensions", type: "Hero", name: "Howard The Duck", comment: "Bra med Man-Thing", ranking: 7 },
-            { expansion: "Dimensions", type: "Hero", name: "Jessica Jones", comment: "Trist", ranking: 4 },
-            { expansion: "Dimensions", type: "Hero", name: "Man-Thing", comment: "Kul, tematisk", ranking: 7 },
-            { expansion: "Dimensions", type: "Mastermind", name: "J. Jonah Jameson", comment: "Ok", ranking: 6 },
-            { expansion: "Doctor Strange", type: "Hero", name: "The Ancient One", comment: "Bra", ranking: 6 },
-            { expansion: "Doctor Strange", type: "Hero", name: "Doctor Voodoo", comment: "Vet ej riktigt", ranking: 6 },
-            { expansion: "Doctor Strange", type: "Hero", name: "Doctor Strange", comment: "Ok", ranking: 6 },
-            { expansion: "Doctor Strange", type: "Mastermind", name: "Dark Phoenix", comment: "Ok", ranking: 6 },
-            { expansion: "Fantastic Four", type: "Hero", name: "Human Torch", comment: "Kul", ranking: 8 },
-            { expansion: "Fantastic Four", type: "Hero", name: "Invisible Woman", comment: "Bra", ranking: 8 },
-            { expansion: "Fantastic Four", type: "Hero", name: "Silver Surfer", comment: "Kul", ranking: 7 },
-            { expansion: "Fantastic Four", type: "Mastermind", name: "Galactus", comment: "Galet svår", ranking: 7 },
-            { expansion: "Fantastic Four", type: "Mastermind", name: "Mole Man", comment: "Kul", ranking: 7 },
-            { expansion: "Heroes of Asgard", type: "Hero", name: "Lady Sif", comment: "Bra", ranking: 7 },
-            { expansion: "Heroes of Asgard", type: "Hero", name: "The warriors three", comment: "Kul", ranking: 7 },
-            { expansion: "Heroes of Asgard", type: "Hero", name: "Thor", comment: "Kul", ranking: 7 },
-            { expansion: "Heroes of Asgard", type: "Hero", name: "Valkyrie", comment: "Ok", ranking: 6 },
-            { expansion: "Heroes of Asgard", type: "Mastermind", name: "Hela, Goddess of Death", comment: "Omöjlig", ranking: 3 },
-            { expansion: "Heroes of Asgard", type: "Mastermind", name: "Malekith the Accursed", comment: "Enkel", ranking: 6 },
-            { expansion: "Into the cosmos", type: "Hero", name: "Adam Warlock", comment: "Ok", ranking: 7 },
-            { expansion: "Into the cosmos", type: "Hero", name: "Captain Mar-vell", comment: "Ok. Ovant med Danger Sense", ranking: 7 },
-            { expansion: "Into the cosmos", type: "Hero", name: "Moondragon", comment: "Ok. Ovant med Danger Sense", ranking: 7 },
-            { expansion: "Into the cosmos", type: "Hero", name: "Nebula", comment: "Ok", ranking: 6 },
-            { expansion: "Into the cosmos", type: "Hero", name: "Nova", comment: "Kul", ranking: 7 },
-            { expansion: "Into the cosmos", type: "Hero", name: "Quasar", comment: "Hård", ranking: 8 },
-            { expansion: "Into the cosmos", type: "Hero", name: "Ronan the Accuser", comment: "Ok", ranking: 7 },
-            { expansion: "Into the cosmos", type: "Hero", name: "Yondu", comment: "Kul", ranking: 8 },
-            { expansion: "Into the cosmos", type: "Hero", name: "Phyla-Vell", comment: "Kul", ranking: 8 },
-            { expansion: "Into the cosmos", type: "Mastermind", name: "Magus", comment: "Lätt", ranking: 7 },
-            { expansion: "Into the cosmos", type: "Mastermind", name: "The Grandmaster", comment: "Kul", ranking: 8 },
-            { expansion: "Into the cosmos", type: "Mastermind", name: "The Beyonder", comment: "Kul men jättesvår", ranking: 9 },
-            { expansion: "Midnight Sons", type: "Hero", name: "Elsa Bloodstone", comment: "Ok", ranking: 6 },
-            { expansion: "Midnight Sons", type: "Hero", name: "Werewolf by Night", comment: "Kul, men jag gillar inte Moonlight", ranking: 7 },
-            { expansion: "Midnight Sons", type: "Hero", name: "Wong, Master of the Mystic Arts", comment: "Kul", ranking: 7 },
-            { expansion: "Midnight Sons", type: "Mastermind", name: "Lilith, Mother of Demons", comment: "Svår", ranking: 7 },
-            { expansion: "New Mutants", type: "Hero", name: "Karma", comment: "Vet ej riktigt", ranking: 5 },
-            { expansion: "New Mutants", type: "Hero", name: "Mirage", comment: "Vet ej riktigt", ranking: 5 },
-            { expansion: "New Mutants", type: "Hero", name: "Sunspot", comment: "Ok", ranking: 6 },
-            { expansion: "New Mutants", type: "Hero", name: "Warlock", comment: "Ok", ranking: 6 },
-            { expansion: "New Mutants", type: "Hero", name: "Wolfbane", comment: "Ok", ranking: 6 },
-            { expansion: "New Mutants", type: "Mastermind", name: "Belasco, Demon Lord of Limbo", comment: "Tråkig", ranking: 5 },
-            { expansion: "New Mutants", type: "Mastermind", name: "Emma Frost, The White Queen", comment: "Rörig. Meckig Master Strike", ranking: 3 },
-            { expansion: "Noir", type: "Hero", name: "Iron-man Noir", comment: "Kul", ranking: 7 },
-            { expansion: "Noir", type: "Hero", name: "Luke Cage noir", comment: "Ok", ranking: 7 },
-            { expansion: "Noir", type: "Hero", name: "Spider-Man noir", comment: "Tråkig", ranking: 5 },
-            { expansion: "Noir", type: "Mastermind", name: "The Goblin, Underworld boss", comment: "Kul", ranking: 7 },
-            { expansion: "Noir", type: "Hero", name: "Daredevil Noir", comment: "Ok", ranking: 7 },
-            { expansion: "Noir", type: "Mastermind", name: "Charles Xavier, Professor Of Crime", comment: "Kul", ranking: 8 },
-            { expansion: "Paint the town red", type: "Hero", name: "Black Cat", comment: "Kul", ranking: 7 },
-            { expansion: "Paint the town red", type: "Hero", name: "Moon Knight", comment: "Vet ej riktigt", ranking: 5 },
-            { expansion: "Paint the town red", type: "Hero", name: "Scarlet Spider", comment: "Ok", ranking: 6 },
-            { expansion: "Paint the town red", type: "Hero", name: "Spider Woman", comment: "Ok", ranking: 6 },
-            { expansion: "Paint the town red", type: "Hero", name: "Symbiote Spider-Man", comment: "Ok", ranking: 6 },
-            { expansion: "Paint the town red", type: "Mastermind", name: "Carnage", comment: "Ok", ranking: 5 },
-            { expansion: "Paint the town red", type: "Mastermind", name: "Mysterio", comment: "Ok", ranking: 6 },
-            { expansion: "Realm of Kings", type: "Hero", name: "Black Bolt", comment: "Trist", ranking: 4 },
-            { expansion: "Realm of Kings", type: "Hero", name: "Crystal", comment: "Svår, rörig", ranking: 7 },
-            { expansion: "Realm of Kings", type: "Hero", name: "Gorgon", comment: "Jättebra", ranking: 9 },
-            { expansion: "Realm of Kings", type: "Hero", name: "Karnak", comment: "Ok", ranking: 7 },
-            { expansion: "Realm of Kings", type: "Hero", name: "Medusa", comment: "Kul", ranking: 8 },
-            { expansion: "Realm of Kings", type: "Mastermind", name: "Emperor Vulcan of the Shi'ar", comment: "Lätt", ranking: 6 },
-            { expansion: "Realm of Kings", type: "Mastermind", name: "Maximus the Mad", comment: "Lagom med regler", ranking: 9 },
-            { expansion: "Revelations", type: "Hero", name: "Captain Marvel, Agent Of S.H.I.E.L.D", comment: "Inte så kul", ranking: 5 },
-            { expansion: "Revelations", type: "Hero", name: "Darkhawk", comment: "Kul", ranking: 8 },
-            { expansion: "Revelations", type: "Hero", name: "Hellcat", comment: "Kul", ranking: 9 },
-            { expansion: "Revelations", type: "Hero", name: "Photon", comment: "Jättebra", ranking: 9 },
-            { expansion: "Revelations", type: "Hero", name: "Quicksilver", comment: "Kul", ranking: 8 },
-            { expansion: "Revelations", type: "Hero", name: "Ronin", comment: "Kul", ranking: 7 },
-            { expansion: "Revelations", type: "Hero", name: "Scarlet Witch", comment: "Svår, vill prova igen", ranking: 6 },
-            { expansion: "Revelations", type: "Hero", name: "Speed", comment: "Kul", ranking: 9 },
-            { expansion: "Revelations", type: "Hero", name: "War Machine", comment: "Ok", ranking: 6 },
-            { expansion: "Revelations", type: "Mastermind", name: "Grim Reaper", comment: "Svår", ranking: 7 },
-            { expansion: "Revelations", type: "Mastermind", name: "Mandarin", comment: "Lätt om man har tur med Villaindeck", ranking: 6 },
-            { expansion: "Revelations", type: "Mastermind", name: "The Hood", comment: "Verkar lätt", ranking: 6 },
-            { expansion: "S.H.I.E.L.D.S.", type: "Hero", name: "Agent Phil Couison", comment: "Tråkig", ranking: 5 },
-            { expansion: "S.H.I.E.L.D.S.", type: "Hero", name: "Deathlok", comment: "Jättebra", ranking: 9 },
-            { expansion: "S.H.I.E.L.D.S.", type: "Hero", name: "Mockingbird", comment: "Tråkig", ranking: 5 },
-            { expansion: "S.H.I.E.L.D.S.", type: "Hero", name: "Quake", comment: "Jättebra", ranking: 9 },
-            { expansion: "S.H.I.E.L.D.S.", type: "Mastermind", name: "Hydra Super-Adaptoid", comment: "Jättebra", ranking: 9 },
-            { expansion: "Secret Wars 2", type: "Hero", name: "Beast", comment: "Kul", ranking: 8 },
-            { expansion: "Secret Wars 2", type: "Hero", name: "Agent Venom", comment: "Dålig", ranking: 5 },
-            { expansion: "Secret Wars 2", type: "Hero", name: "Arkon The Magnificent", comment: "Kul", ranking: 8 },
-            { expansion: "Secret Wars 2", type: "Mastermind", name: "Immortal Emperor Zheng Zhu", comment: "Lätt", ranking: 7 },
-            { expansion: "Secret Wars vol1", type: "Hero", name: "Black Bolt", comment: "Ok", ranking: 5 },
-            { expansion: "Secret Wars vol1", type: "Hero", name: "Black Panther", comment: "Kul", ranking: 7 },
-            { expansion: "Secret Wars vol1", type: "Hero", name: "Captain Marvel", comment: "Bra", ranking: 7 },
-            { expansion: "Secret Wars vol1", type: "Hero", name: "Dr. Strange", comment: "Kul", ranking: 7 },
-            { expansion: "Secret Wars vol1", type: "Hero", name: "Lady Thor", comment: "Kul", ranking: 8 },
-            { expansion: "Secret Wars vol1", type: "Hero", name: "Maximus", comment: "Kul", ranking: 8 },
-            { expansion: "Secret Wars vol1", type: "Hero", name: "Namor, The Sub-Mariner", comment: "Ok, bra för solospel", ranking: 7 },
-            { expansion: "Secret Wars vol1", type: "Hero", name: "Superior Iron Man", comment: "Kul, rarekortet inte kul för solospel", ranking: 7 },
-            { expansion: "Secret Wars vol1", type: "Hero", name: "Thanos", comment: "Bara bra om man har Bystanders", ranking: 6 },
-            { expansion: "Secret Wars vol1", type: "Hero", name: "Ultimate Spider-man", comment: "Kul, rarekortet inte bra om man inte fokuserar på spiderman", ranking: 8 },
-            { expansion: "Secret Wars vol1", type: "Mastermind", name: "Madelyne Pryor", comment: "Svår men kul", ranking: 7 },
-            { expansion: "Secret Wars vol1", type: "Mastermind", name: "Nimrod, Super Sentinel", comment: "Lätt", ranking: 5 },
-            { expansion: "Secret Wars vol1", type: "Mastermind", name: "Wasteland Hulk", comment: "Bra", ranking: 8 },
-            { expansion: "Secret Wars vol1", type: "Mastermind", name: "Zombie Green Goblin", comment: "Jättekul", ranking: 8 },
-            { expansion: "Secret Wars vol2", type: "Hero", name: "Proxima Midnight", comment: "Ok", ranking: 6 },
-            { expansion: "Venom", type: "Hero", name: "Carnage", comment: "Jättebra", ranking: 8 },
-            { expansion: "Venom", type: "Hero", name: "Venom", comment: "Ok", ranking: 7 },
-            { expansion: "Venom", type: "Hero", name: "Venomized Dr. Strange", comment: "Kul", ranking: 8 },
-            { expansion: "Venom", type: "Hero", name: "Venompool", comment: "Tråkig", ranking: 4 },
-            { expansion: "Venom", type: "Mastermind", name: "Hybrid", comment: "Ok", ranking: 6 },
-            { expansion: "Venom", type: "Mastermind", name: "Poison Thanos", comment: "Jättesvår", ranking: 7 },
-            { expansion: "Venom", type: "Villain", name: "Life Foundation", comment: "Ok", ranking: 6 },
-            { expansion: "Venom", type: "Villain", name: "Poison", comment: "Ej tematiska", ranking: 4 },
-            { expansion: "World war Hulk", type: "Hero", name: "Bruce Banner", comment: "Kul", ranking: 6 },
-            { expansion: "World war Hulk", type: "Hero", name: "Amadeus Cho", comment: "Rätt tråkig", ranking: 5 },
-            { expansion: "World war Hulk", type: "Hero", name: "Joe Fixit, Grey Hulk", comment: "Ok", ranking: 7 },
-            { expansion: "World war Hulk", type: "Hero", name: "Namora", comment: "Ok", ranking: 7 },
-            { expansion: "World war Hulk", type: "Hero", name: "Gladiator Hulk", comment: "Jättebra", ranking: 9 },
-            { expansion: "World war Hulk", type: "Hero", name: "Korg", comment: "Jättebra", ranking: 9 },
-            { expansion: "World war Hulk", type: "Hero", name: "Miek the Unhived", comment: "Kul", ranking: 8 },
-            { expansion: "World war Hulk", type: "Hero", name: "Rick Jones", comment: "Kul", ranking: 6 },
-            { expansion: "World war Hulk", type: "Hero", name: "She-Hulk", comment: "Kul", ranking: 6 },
-            { expansion: "World war Hulk", type: "Mastermind", name: "General \"Thunderbolt\" Ross", comment: "Kul", ranking: 8 },
-            { expansion: "World war Hulk", type: "Mastermind", name: "King Hulk", comment: "Enkel", ranking: 5 },
-            { expansion: "World war Hulk", type: "Mastermind", name: "Illuminati, Secret Society", comment: "Ok", ranking: 6 },
-            { expansion: "World war Hulk", type: "Mastermind", name: "M.O.D.O.K.", comment: "Jättebra", ranking: 9 },
-            { expansion: "World war Hulk", type: "Mastermind", name: "The Red King", comment: "Jättebra", ranking: 9 },
-            { expansion: "World war Hulk", type: "Mastermind", name: "The Sentry", comment: "Jättebra", ranking: 7 },
-            { expansion: "X-Men", type: "Hero", name: "Beast", comment: "Kul", ranking: 6 },
-            { expansion: "X-Men", type: "Hero", name: "Cannonball", comment: "Ok", ranking: 6 },
-            { expansion: "X-Men", type: "Hero", name: "Colossus & Wolverine", comment: "Kul", ranking: 8 },
-            { expansion: "X-Men", type: "Hero", name: "Longshot", comment: "Kul", ranking: 5 },
-            { expansion: "X-Men", type: "Hero", name: "X-23", comment: "Kul", ranking: 6 },
-            { expansion: "X-Men", type: "Hero", name: "Dazzler", comment: "Jättebra", ranking: 8 },
-            { expansion: "X-Men", type: "Hero", name: "Jubilee", comment: "Jättebra", ranking: 8 },
-            { expansion: "X-Men", type: "Hero", name: "Psylocke", comment: "Jättekul", ranking: 8 },
-            { expansion: "X-Men", type: "Mastermind", name: "Deathbird", comment: "Kul", ranking: 8 },
-            { expansion: "X-Men", type: "Mastermind", name: "MOJO", comment: "Jättekul", ranking: 7 },
-            { expansion: "X-Men", type: "Mastermind", name: "Dark Phoenix", comment: "Supersvår men kul", ranking: 8 },
-            // Schemes
-            { expansion: "Annihilation", type: "Scheme", name: "Put Humanity on Trial", comment: "Kul", ranking: 7 },
-            { expansion: "Annihilation", type: "Scheme", name: "Sneak Attack the Heroes Homes", comment: "Kul", ranking: 7 },
-            { expansion: "Ant-Man", type: "Scheme", name: "Trap Heroes in the Microverse", comment: "Riktigt bra", ranking: 8 },
-            { expansion: "Black Panther", type: "Scheme", name: "Seize the Wakanda Throne", comment: "Ok", ranking: 7 },
-            { expansion: "Black Panther", type: "Scheme", name: "Plunder Wakanda's Vibranium", comment: "Rörig men kul när man fattar", ranking: 7 },
-            { expansion: "Black Widow", type: "Scheme", name: "Frame Heroes for Murder", comment: "Konstig", ranking: 5 },
-            { expansion: "Black Widow", type: "Scheme", name: "Corrupt the Spy Agencies", comment: "Kul", ranking: 7 },
-            { expansion: "Black Widow", type: "Scheme", name: "Sniper Rifle Assassins", comment: "", ranking: 7 },
-            { expansion: "Captain America", type: "Scheme", name: "Go back in time to slay heroe's ancestors", comment: "Ok", ranking: 6 },
-            { expansion: "Captain America", type: "Scheme", name: "The Unbreakable Enigma Code", comment: "Lätt, memory", ranking: 5 },
-            { expansion: "Captain America", type: "Scheme", name: "Brainwash The Military", comment: "Kul", ranking: 7 },
-            { expansion: "Captain America", type: "Scheme", name: "Change the outcome of WWII", comment: "Kul", ranking: 7 },
-            { expansion: "Champions", type: "Scheme", name: "Steal all oxygen on earth", comment: "Ok", ranking: 7 },
-            { expansion: "Civil War", type: "Scheme", name: "Dark Reign of H.A.M.M.E.R. Officers", comment: "Klurig", ranking: 6 },
-            { expansion: "Civil War", type: "Scheme", name: "Reveal Heroe's Secret Identity", comment: "Hopplös, tråkig", ranking: 3 },
-            { expansion: "Core set", type: "Scheme", name: "Midtown Bank Robbery", comment: "Lätt", ranking: 6 },
-            { expansion: "Core set", type: "Scheme", name: "Unleash the power of Cosmic Cube", comment: "Kul och lätt", ranking: 7 },
-            { expansion: "Core set", type: "Scheme", name: "Portal to the Dark Dimension", comment: "Kul", ranking: 7 },
-            { expansion: "Dark City", type: "Scheme", name: "Capture baby hope", comment: "Kul", ranking: 7 },
-            { expansion: "Dark City", type: "Scheme", name: "Detonate the Helicarrier", comment: "Kul", ranking: 7 },
-            { expansion: "Dark City", type: "Scheme", name: "Massive earthquake generator", comment: "Omöjlig med Apocalypse", ranking: 6 },
-            { expansion: "Dark City", type: "Scheme", name: "Organized Crime Wave", comment: "Tråkig", ranking: 4 },
-            { expansion: "Dark City", type: "Scheme", name: "Steal the Weaponized Plutonium", comment: "Riktigt kul", ranking: 9 },
-            { expansion: "Dark City", type: "Scheme", name: "Transform citizens into demons", comment: "Lätt", ranking: 5 },
-            { expansion: "Dark City", type: "Scheme", name: "X-cutioner's song", comment: "Kul", ranking: 7 },
-            { expansion: "Deadpool", type: "Scheme", name: "Deadpool Kills the Marvel Universe", comment: "Nja", ranking: 6 },
-            { expansion: "Doctor Strange", type: "Scheme", name: "The Dark Phoenix Saga", comment: "Slump", ranking: 6 },
-            { expansion: "Fantastic Four", type: "Scheme", name: "Flood the Planet with Melted Glaciers", comment: "Kul", ranking: 8 },
-            { expansion: "Fantastic Four", type: "Scheme", name: "Invincible Force Field", comment: "Kul", ranking: 6 },
-            { expansion: "Fantastic Four", type: "Scheme", name: "Pull Reality Into the Negative Zone", comment: "Nja", ranking: 5 },
-            { expansion: "Heroes of Asgard", type: "Scheme", name: "Ragnarok, Twilight of the Gods", comment: "Skitsvår", ranking: 3 },
-            { expansion: "Heroes of Asgard", type: "Scheme", name: "The Dark World of Svartalfheim", comment: "Kul", ranking: 6 },
-            { expansion: "Into the cosmos", type: "Scheme", name: "Annihilation: Conquest", comment: "Kul, svår", ranking: 7 },
-            { expansion: "Into the cosmos", type: "Scheme", name: "The contest of champions", comment: "Lite rörig men jättekul", ranking: 8 },
-            { expansion: "Into the cosmos", type: "Scheme", name: "Turn the soul of Adam Warlock", comment: "Lätt men kul", ranking: 7 },
-            { expansion: "Into the cosmos", type: "Scheme", name: "Destroy The Nova Corp", comment: "Jättekul", ranking: 8 },
-            { expansion: "Midnight Sons", type: "Scheme", name: "Ritual Sacrifice To Summon Chthon", comment: "Vet ej riktigt", ranking: 6 },
-            { expansion: "New Mutants", type: "Scheme", name: "The Demon Bear Saga", comment: "Omöjlig. Slump", ranking: 3 },
-            { expansion: "New Mutants", type: "Scheme", name: "Trapped in the insane asylum", comment: "Rörig", ranking: 3 },
-            { expansion: "Noir", type: "Scheme", name: "Find the split personality killer", comment: "Riktigt bra. Men bättre på fler spelare", ranking: 8 },
-            { expansion: "Noir", type: "Scheme", name: "Silence The Witnesses", comment: "Riktigt kul", ranking: 8 },
-            { expansion: "Paint the town red", type: "Scheme", name: "Invade the daily Bugle News HQ", comment: "Rörig men kul när man fattar", ranking: 6 },
-            { expansion: "Paint the town red", type: "Scheme", name: "Splice Humans with Spider DNA", comment: "Ok", ranking: 6 },
-            { expansion: "Realm of Kings", type: "Scheme", name: "Devolve with Xerogen Crystals", comment: "Fantastisk", ranking: 9 },
-            { expansion: "Realm of Kings", type: "Scheme", name: "Ruin the Perfect Wedding", comment: "Trist", ranking: 6 },
-            { expansion: "Realm of Kings", type: "Scheme", name: "Tornado of Terrigen Mists", comment: "Jättekul", ranking: 8 },
-            { expansion: "Revelations", type: "Scheme", name: "Open Hydra Revolution", comment: "Jättekul", ranking: 9 },
-            { expansion: "Revelations", type: "Scheme", name: "The Kovac Saga", comment: "Ok", ranking: 7 },
-            { expansion: "Revelations", type: "Scheme", name: "Tsunami crushes the coast", comment: "Kul", ranking: 7 },
-            { expansion: "S.H.I.E.L.D.S.", type: "Scheme", name: "S.H.I.E.L.D.S. vs Hydra", comment: "Jättebra", ranking: 9 },
-            { expansion: "Secret Wars 2", type: "Scheme", name: "Deadlands Hordes Charge The Wall", comment: "Lätt kul", ranking: 8 },
-            { expansion: "Secret Wars vol1", type: "Scheme", name: "Build an army of Annihilation", comment: "Svår med jättekul", ranking: 8 },
-            { expansion: "Secret Wars vol1", type: "Scheme", name: "Dark Alliance", comment: "Jättebra", ranking: 9 },
-            { expansion: "Secret Wars vol1", type: "Scheme", name: "Master of Tyrants", comment: "Lätt", ranking: 7 },
-            { expansion: "Secret Wars vol2", type: "Scheme", name: "Pan-Dimensional Plague", comment: "Kul", ranking: 8 },
-            { expansion: "Venom", type: "Scheme", name: "Maximum Carnage", comment: "Jättesvår med Poison Thanos", ranking: 7 },
-            { expansion: "Venom", type: "Scheme", name: "Paralyzing Venom", comment: "Enkel", ranking: 6 },
-            { expansion: "Venom", type: "Scheme", name: "Symbiotic Absorption", comment: "Kul", ranking: 7 },
-            { expansion: "World war Hulk", type: "Scheme", name: "Subjugate with obedience disks", comment: "Jättebra", ranking: 9 },
-            { expansion: "World war Hulk", type: "Scheme", name: "Mutating Gamma Rays", comment: "Kul", ranking: 7 },
-            { expansion: "World war Hulk", type: "Scheme", name: "World War Hulk", comment: "Hopplös", ranking: 8 },
-            { expansion: "X-Men", type: "Scheme", name: "Alien Brood Encounter", comment: "Kul", ranking: 8 },
-            { expansion: "X-Men", type: "Scheme", name: "Anti-Mutant Hatred", comment: "Jättekul", ranking: 7 },
-            { expansion: "X-Men", type: "Scheme", name: "The Dark Phoenix Saga", comment: "Supersvår men kul", ranking: 8 }
-        ];
+function enterFranchise() {
+    const f = cfg();
+    const exps = [...new Set([...myCards(), ...myGames()].map(x => x.expansion))].sort((a, b) => a.localeCompare(b));
+    $('fExpansion').innerHTML = '<option value="">All expansions</option>' + exps.map(e => `<option>${esc(e)}</option>`).join('');
+    $('expansionList').innerHTML = exps.map(e => `<option value="${esc(e)}">`).join('');
+    $('fType').innerHTML = '<option value="">All types</option>' + f.types.map(t => `<option value="${esc(t)}">${esc(plural(t))}</option>`).join('');
+    $('cType').innerHTML = f.types.map(t => `<option>${esc(t)}</option>`).join('');
+    $('gNameLabel').textContent = f.scenario;
+    $('gHeroesLabel').textContent = f.used;
+    $('detailedScore').hidden = f.scoring !== 'detailed';
+    $('simpleScore').hidden = f.scoring !== 'simple';
+    resetCardForm(); resetGameForm();
+    ['fExpansion', 'fType', 'fRating'].forEach(id => $(id).value = '');
+    $('fSearch').value = '';
+    sortState = { cards: { col: null, dir: 1 }, games: { col: null, dir: 1 } };
+    renderAll();
+}
 
-        const INITIAL_GAME_DATA = [
-            { expansion: "Annihilation", name: "Put Humanity on Trial", comment: "Kul", ranking: 7, victoryPile: 36, bystanders: 0, bystanderPenalty: 0, twists: 10, twistPenalty: -30, escaped: 0, escapePenalty: 0, sum: 6, heroes: "Kang the Conqueror, PSI-Lord, Fantastic Four United, Brainstorm", result: "Vann" },
-            { expansion: "Annihilation", name: "Sneak Attack the Heroes Homes", comment: "Kul", ranking: 7, victoryPile: 28, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 13, heroes: "Annihilus, Heralds of Galactus, Fantastic Four United, Super-Skrull", result: "Förlorade. Jätteroligt, måste köras igen" },
-            { expansion: "Ant-Man", name: "Trap Heroes in the Microverse", comment: "Riktigt bra", ranking: 8, victoryPile: 31, bystanders: 0, bystanderPenalty: 0, twists: 1, twistPenalty: -3, escaped: 0, escapePenalty: 0, sum: 28, heroes: "Ultron, Jocasta, Ant-Man, WASP", result: "Vann på typ 5 rundan" },
-            { expansion: "Black Panther", name: "Seize the Wakanda Throne", comment: "Ok", ranking: 7, victoryPile: 23, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 8, heroes: "King Black Panther, Princess Shuri, Queen Storm of Wakanda", result: "Förlorade" },
-            { expansion: "Black Panther", name: "Plunder Wakanda's Vibranium", comment: "Rörig men kul när man fattar", ranking: 7, victoryPile: 53, bystanders: 0, bystanderPenalty: 0, twists: 8, twistPenalty: -24, escaped: 1, escapePenalty: -1, sum: 28, heroes: "King Black Panther, Princess Shuri, Queen Storm of Wakanda", result: "Förlorade" },
-            { expansion: "Black Widow", name: "Frame Heroes for Murder", comment: "Konstig", ranking: 5, victoryPile: 23, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 8, heroes: "Spiderman, Black Widow, Red Guardian, White Tiger, Yelena Belova, Falcon & Winter Soldie", result: "Förlorade på ett tråkigt sätt" },
-            { expansion: "Black Widow", name: "Corrupt the Spy Agencies", comment: "Kul", ranking: 7, victoryPile: 31, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: 13, heroes: "Yelanda Belova, White Tiger, Red Guardian", result: "Förlorade" },
-            { expansion: "Black Widow", name: "Sniper Rifle Assassins", comment: "", ranking: 7, victoryPile: 33, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 12, heroes: "Red Guardian, White Tiger, Yelena Belova", result: "" },
-            { expansion: "Captain America", name: "Go back in time to slay heroe's ancestors", comment: "Ok", ranking: 6, victoryPile: 40, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: 22, heroes: "Arnim Zola, Ant-Man, Steve Rogers, director of S.H.I.E.L.D., Black Knight, Jocasta, Winter Soldier, Captain America 1941, Captain America Falcon, Agent x-13", result: "Vann" },
-            { expansion: "Captain America", name: "The Unbreakable Enigma Code", comment: "Lätt, memory", ranking: 5, victoryPile: 54, bystanders: 0, bystanderPenalty: 0, twists: 4, twistPenalty: -12, escaped: 0, escapePenalty: 0, sum: 42, heroes: "Baron Heinrich Zemo, Winter Soldier, Captain America 1941, Captain America Falcon", result: "Vann" },
-            { expansion: "Captain America", name: "Brianwash The Military", comment: "Kul", ranking: 7, victoryPile: 9, bystanders: 0, bystanderPenalty: 0, twists: 3, twistPenalty: -9, escaped: 0, escapePenalty: 0, sum: 0, heroes: "Howard the Duck, Man-Thing, Jessica Jones", result: "Vann" },
-            { expansion: "Captain America", name: "Change the outcome of WWII", comment: "Kul", ranking: 7, victoryPile: 73, bystanders: 1, bystanderPenalty: -4, twists: 7, twistPenalty: -21, escaped: 3, escapePenalty: -3, sum: 45, heroes: "Arnim Zola, Captain America, Steve Roger, Director of S.H.I.E.L.D, Agent x-13", result: "Vann" },
-            { expansion: "Champions", name: "Steal all oxygen on earth", comment: "Ok", ranking: 7, victoryPile: 36, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 15, heroes: "Pagliacci. Viv Vision, Nova, Ms. Marvel", result: "Förlorade" },
-            { expansion: "Civil War", name: "Dark Reign of H.A.M.M.E.R. Officers", comment: "Klurig", ranking: 6, victoryPile: 0, bystanders: 0, bystanderPenalty: 0, twists: 4, twistPenalty: -12, escaped: 0, escapePenalty: 0, sum: -12, heroes: "", result: "Förlorade" },
-            { expansion: "Civil War", name: "Reveal Heroe's Secet Identity", comment: "Hopplös, tråkig", ranking: 3, victoryPile: 6, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: -9, heroes: "", result: "Förlorade" },
-            { expansion: "Core set", name: "Midtown Bank Robbery", comment: "Lätt", ranking: 6, victoryPile: 38, bystanders: 0, bystanderPenalty: 0, twists: 4, twistPenalty: -12, escaped: 0, escapePenalty: 0, sum: 26, heroes: "Re Skull, Hawkeye, Black Widow, Nick Fury", result: "Lättaste någonsin" },
-            { expansion: "Core set", name: "Unleash the power of Cosmic Cube", comment: "Kul och lätt", ranking: 7, victoryPile: 49, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: 31, heroes: "Psychic Torment. Black Widow, Colossus, Domino", result: "Vann lätt, spelade Wolverine" },
-            { expansion: "Core set", name: "Portal to the Dark Dimension", comment: "Kul", ranking: 7, victoryPile: 34, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: 16, heroes: "Loke. Hulk, Thor, Deadpool", result: "Vann med två kort kvar" },
-            { expansion: "Dark City", name: "Capture baby hope", comment: "Kul", ranking: 7, victoryPile: 0, bystanders: 0, bystanderPenalty: 0, twists: 0, twistPenalty: 0, escaped: 0, escapePenalty: 0, sum: 0, heroes: "", result: "" },
-            { expansion: "Dark City", name: "Detonate the Helicarrier", comment: "Kul", ranking: 7, victoryPile: 72, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 57, heroes: "Mr. Sinister med Angel, Gambit, Jean Grey, Emma Frost, Professor X, Iceman", result: "Vann" },
-            { expansion: "Dark City", name: "Massive earthquake generatot", comment: "Omöjlig med Apocalypse", ranking: 6, victoryPile: 36, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 15, heroes: "Apocalypse, Angel, Iron Fist,Iceman", result: "Förlorade" },
-            { expansion: "Dark City", name: "Organized Crime Wave", comment: "Tråkig", ranking: 4, victoryPile: 0, bystanders: 0, bystanderPenalty: 0, twists: 0, twistPenalty: 0, escaped: 0, escapePenalty: 0, sum: 0, heroes: "", result: "" },
-            { expansion: "Dark City", name: "Steal the Weaponized Plutonium", comment: "Riktigt kul", ranking: 9, victoryPile: 48, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 2, escapePenalty: -2, sum: 31, heroes: "Kingpin med Elektra, Bishop och Blade", result: "Vann" },
-            { expansion: "Dark City", name: "Transform citizens inte demons", comment: "Lätt", ranking: 5, victoryPile: 77, bystanders: 0, bystanderPenalty: 0, twists: 2, twistPenalty: -6, escaped: 0, escapePenalty: 0, sum: 71, heroes: "Mr Sinister, Angel, Wolverine, Elektra", result: "" },
-            { expansion: "Dark City", name: "X-cutioner's song", comment: "Kul", ranking: 7, victoryPile: 38, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 23, heroes: "Mephisto, Iron Fist, Blade, Ghost Rider, (Bishop)", result: "" },
-            { expansion: "Deadpool", name: "Deadpool Kills the Marvel Universe", comment: "Nja", ranking: 6, victoryPile: 30, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 1, escapePenalty: -1, sum: 11, heroes: "Solo, Deadpool, Stingray", result: "Förlorade" },
-            { expansion: "Doctor Strange", name: "The Dark Phoenix Saga", comment: "Slump", ranking: 6, victoryPile: 34, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 13, heroes: "Doctor Strange, Doctor Voodoo, The Ancient One", result: "Vann med 5 kort kvar i Villain Deck" },
-            { expansion: "Fantastic Four", name: "Flood the Planet with Melted Glaciers", comment: "Kul", ranking: 8, victoryPile: 46, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 3, escapePenalty: -3, sum: 22, heroes: "Galactus med Human Torch, Invisible Woman och Silver Surfer", result: "Vann" },
-            { expansion: "Fantastic Four", name: "Invincible Force Field", comment: "Kul", ranking: 6, victoryPile: 44, bystanders: 2, bystanderPenalty: -8, twists: 5, twistPenalty: -15, escaped: 3, escapePenalty: -3, sum: 18, heroes: "Mole Man med Human Torch, Invisible Woman och Silver Surfer", result: "Vann med två kort kvar" },
-            { expansion: "Fantastic Four", name: "Pull Reality Into the Negative Zone", comment: "Nja", ranking: 5, victoryPile: 19, bystanders: 1, bystanderPenalty: -4, twists: 7, twistPenalty: -21, escaped: 4, escapePenalty: -4, sum: -10, heroes: "Galactus med Human Torch, Invisible Woman och Silver Surfer", result: "Förlorade" },
-            { expansion: "Heroes of Asgard", name: "Ragnarok, Twigight of the Gods", comment: "Skitsvår", ranking: 3, victoryPile: 28, bystanders: 0, bystanderPenalty: 0, twists: 10, twistPenalty: -30, escaped: 2, escapePenalty: -2, sum: -4, heroes: "Hela", result: "Förlorade" },
-            { expansion: "Heroes of Asgard", name: "The Dark World of Svartalfheim", comment: "Kul", ranking: 6, victoryPile: 25, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: 7, heroes: "Malakith", result: "Vann" },
-            { expansion: "Into the cosmos", name: "Annilhilation: Conquest", comment: "Kul, svår", ranking: 7, victoryPile: 58, bystanders: 0, bystanderPenalty: 0, twists: 9, twistPenalty: -27, escaped: 0, escapePenalty: 0, sum: 31, heroes: "The Grandmaster med Captian Mar-vell, Nebula, Ronan the Accuser och Moondragon", result: "Vann" },
-            { expansion: "Into the cosmos", name: "The contest of champions", comment: "Lite rörig men jättekul", ranking: 8, victoryPile: 49, bystanders: 0, bystanderPenalty: 0, twists: 9, twistPenalty: -27, escaped: 0, escapePenalty: 0, sum: 22, heroes: "", result: "Vann med två kort kvar i Villain deck" },
-            { expansion: "Into the cosmos", name: "Turn the soul of Adam Warlock", comment: "Lätt men kul", ranking: 7, victoryPile: 43, bystanders: 0, bystanderPenalty: 0, twists: 10, twistPenalty: -30, escaped: 0, escapePenalty: 0, sum: 13, heroes: "", result: "Vann för lätt" },
-            { expansion: "Into the cosmos", name: "Destroy The Nova Corp", comment: "Jättekul", ranking: 8, victoryPile: 38, bystanders: 0, bystanderPenalty: 0, twists: 9, twistPenalty: -27, escaped: 0, escapePenalty: 0, sum: 11, heroes: "The Beyonder, Phyla-Yell, Yondu, Nova, Nebula, Moondragon", result: "Förlorade" },
-            { expansion: "Midnight Sons", name: "Ritual Sacrifice To Summon Chthon", comment: "Vet ej riktigt", ranking: 6, victoryPile: 37, bystanders: 0, bystanderPenalty: 0, twists: 0, twistPenalty: 0, escaped: 0, escapePenalty: 0, sum: 37, heroes: "Lilith, Werewolf by Night, Wong, Master of the Mystic Arts, Elsa Bloodstone", result: "Förlorade tråkigt" },
-            { expansion: "New Mutants", name: "The Demon Bear Saga", comment: "Omöjlig. Slump", ranking: 3, victoryPile: 0, bystanders: 0, bystanderPenalty: 0, twists: 8, twistPenalty: -24, escaped: 0, escapePenalty: 0, sum: -24, heroes: "", result: "Förlorade direkt" },
-            { expansion: "New Mutants", name: "Trapped in the insane asylum", comment: "Rörig", ranking: 3, victoryPile: 33, bystanders: 0, bystanderPenalty: 0, twists: 3, twistPenalty: -9, escaped: 0, escapePenalty: 0, sum: 24, heroes: "", result: "Förlorade" },
-            { expansion: "Noir", name: "Find the split personality killer", comment: "Riktigt bra. Men bättre på fler spelare", ranking: 8, victoryPile: 19, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 4, heroes: "The Gobiln, Underworld boss, Spider-man noir, Luca Cage noir, Iron-man noir", result: "Vann" },
-            { expansion: "Noir", name: "Silence The Witnesses", comment: "Riktigt kul", ranking: 8, victoryPile: 59, bystanders: 3, bystanderPenalty: -12, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: 29, heroes: "Charles Xavier, Professor Of Crime, Iron Man Noir, Spider-man Noir, Daredevil Noir", result: "Vann" },
-            { expansion: "Paint the town red", name: "Invade the daily Bugle News HQ", comment: "Rörig men kul när man fattar", ranking: 6, victoryPile: 56, bystanders: 0, bystanderPenalty: 0, twists: 8, twistPenalty: -24, escaped: 0, escapePenalty: 0, sum: 32, heroes: "Carnage, Symbiote Spider-Man, Moon Knight, Black Cat", result: "Vann med 10 kort på hand, 3 kort kvar i Villain Deck" },
-            { expansion: "Paint the town red", name: "Splice Humans with Spider DNA", comment: "Ok", ranking: 6, victoryPile: 26, bystanders: 3, bystanderPenalty: -12, twists: 8, twistPenalty: -24, escaped: 4, escapePenalty: -4, sum: -14, heroes: "Mysterio med Spider Woman, Scarlet Spider och Moon Knight", result: "Förlorade på sista kortet" },
-            { expansion: "Realm of Kings", name: "Devolve with Xerogen Crystals", comment: "Fantastisk", ranking: 9, victoryPile: 58, bystanders: 0, bystanderPenalty: 0, twists: 4, twistPenalty: -12, escaped: 0, escapePenalty: 0, sum: 46, heroes: "", result: "Vann med ett kort kvar i Villain deck" },
-            { expansion: "Realm of Kings", name: "Ruin the Perfect Wedding", comment: "Trist", ranking: 6, victoryPile: 50, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 29, heroes: "Maximus the Mad, Crystal, Medusa, Gorgon (Karnak and Black Bolt in wedding)", result: "Vann lätt" },
-            { expansion: "Realm of Kings", name: "Tornado of Terrigen Mists", comment: "Jättekul", ranking: 8, victoryPile: 47, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 26, heroes: "Emperor Vulcan of the Shi'ar, Medusa, Black Bolt, Karnak", result: "Vann lätt" },
-            { expansion: "Revelations", name: "Open Hydra Revolution", comment: "Jättekul", ranking: 9, victoryPile: 29, bystanders: 0, bystanderPenalty: 0, twists: 4, twistPenalty: -12, escaped: 0, escapePenalty: 0, sum: 17, heroes: "Grim Reaper med Hellcat, Speed och Photon", result: "Vann" },
-            { expansion: "Revelations", name: "The Kovac Saga", comment: "Ok", ranking: 7, victoryPile: 19, bystanders: 0, bystanderPenalty: 0, twists: 8, twistPenalty: -24, escaped: 0, escapePenalty: 0, sum: -5, heroes: "", result: "Förlorade" },
-            { expansion: "Revelations", name: "Tsunami crushes the coast", comment: "Kul", ranking: 7, victoryPile: 38, bystanders: 0, bystanderPenalty: 0, twists: 0, twistPenalty: 0, escaped: 0, escapePenalty: 0, sum: 38, heroes: "Mandarin, Speed, Quicksilver, Darkhawk", result: "Vann lite för lätt" },
-            { expansion: "S.H.I.E.L.D.S.", name: "S.H.I.E.L.D.S. vs Hydra", comment: "Jättebra", ranking: 9, victoryPile: 42, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 8, escapePenalty: -8, sum: 13, heroes: "Hydra Super-Adaptoid, Quake, Deathlok, Mockingbird", result: "Slut i Villain deck" },
-            { expansion: "Secret Wars 2", name: "Deadlands Hordes Charge The Wall", comment: "Lätt kul", ranking: 8, victoryPile: 26, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 4, escapePenalty: -4, sum: 1, heroes: "Immortal Emperor Zheng Zhu, Best, Agent Venom, Arkon The Magnificent", result: "Vann lätt" },
-            { expansion: "Secret Wars vol1", name: "Build an army of Annihilation", comment: "Svår med jättekul", ranking: 8, victoryPile: 45, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: 27, heroes: "Madelyn Pryor, Ultimate Sprider-man, Lady Thor, Captain Marvel", result: "Vann" },
-            { expansion: "Secret Wars vol1", name: "Dark Alliance", comment: "Jättebra", ranking: 9, victoryPile: 35, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 14, heroes: "", result: "Förlorade" },
-            { expansion: "Secret Wars vol1", name: "Master of Tyrants", comment: "Lätt", ranking: 7, victoryPile: 41, bystanders: 0, bystanderPenalty: 0, twists: 1, twistPenalty: -3, escaped: 0, escapePenalty: 0, sum: 38, heroes: "", result: "Vann för lätt" },
-            { expansion: "Secret Wars vol2", name: "Pan-Dimentional Plague", comment: "Kul", ranking: 8, victoryPile: 35, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 14, heroes: "Nimrod, Super Sentinel, Maximus, Namor, The Sub-Marine, Proxima Midnight", result: "Vann ganska lätt" },
-            { expansion: "Venom", name: "Maximum Carnage", comment: "Jättesvår med Poison Thanos", ranking: 7, victoryPile: 21, bystanders: 0, bystanderPenalty: 0, twists: 10, twistPenalty: -30, escaped: 0, escapePenalty: 0, sum: -9, heroes: "", result: "Förlorade fyra gånger" },
-            { expansion: "Venom", name: "Paralyzing Venom", comment: "Enkel", ranking: 6, victoryPile: 8, bystanders: 0, bystanderPenalty: 0, twists: 6, twistPenalty: -18, escaped: 0, escapePenalty: 0, sum: -10, heroes: "Venomized Dr. Strange, Carnage, Venompool", result: "Förlorade" },
-            { expansion: "Venom", name: "Symbiotic Absorption", comment: "Kul", ranking: 7, victoryPile: 74, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 59, heroes: "Venomized Dr. Strange, Venom, Carnage", result: "Vann" },
-            { expansion: "World war Hulk", name: "Subjugate with obedience disks", comment: "Jättebra", ranking: 9, victoryPile: 42, bystanders: 0, bystanderPenalty: 0, twists: 8, twistPenalty: -24, escaped: 0, escapePenalty: 0, sum: 18, heroes: "Gladiator Hulk, Korg, Miek the Unhived", result: "Vann" },
-            { expansion: "World war Hulk", name: "Mutating Gamma Rays", comment: "Kul", ranking: 7, victoryPile: 45, bystanders: 0, bystanderPenalty: 0, twists: 5, twistPenalty: -15, escaped: 0, escapePenalty: 0, sum: 30, heroes: "Namora, Amadeus Cho, Joe Fixit, She-Hulk", result: "Vann" },
-            { expansion: "World war Hulk", name: "World War Hulk", comment: "Hopplös", ranking: 8, victoryPile: 38, bystanders: 0, bystanderPenalty: 0, twists: 9, twistPenalty: -27, escaped: 0, escapePenalty: 0, sum: 11, heroes: "Illuminati, M.O.D.O.K., General \"Thunderbolt\" Ross, The Sentry", result: "Förlorade med She-Hulk, Rick Jones, Bruce Banner" },
-            { expansion: "X-Men", name: "Alien Brood Encounter", comment: "Kul", ranking: 8, victoryPile: 60, bystanders: 0, bystanderPenalty: 0, twists: 4, twistPenalty: -12, escaped: 1, escapePenalty: -1, sum: 47, heroes: "Dreathbird med Beast, Cannonball, Colossus & Wolverine", result: "Vann" },
-            { expansion: "X-Men", name: "Anti-Mutant Hatred", comment: "Jättekul", ranking: 7, victoryPile: 53, bystanders: 0, bystanderPenalty: 0, twists: 11, twistPenalty: -33, escaped: 0, escapePenalty: 0, sum: 20, heroes: "X-23, Longshot, Beast", result: "Förlorade" },
-            { expansion: "X-Men", name: "The Dark Phoenix Saga", comment: "Supersvår men kul", ranking: 8, victoryPile: 45, bystanders: 0, bystanderPenalty: 0, twists: 7, twistPenalty: -21, escaped: 0, escapePenalty: 0, sum: 24, heroes: "Dark Phoenix, Dazzler, Jubilee, Psylocke", result: "Vann med 15 kort kvar i Villain Deck och två i Hero Deck" }
-        ];
+function filtered() {
+    const exp = $('fExpansion').value, type = $('fType').value;
+    const q = $('fSearch').value.trim().toLowerCase();
+    const min = parseInt($('fRating').value) || 0;
+    const hit = (...fields) => !q || fields.some(v => v && String(v).toLowerCase().includes(q));
+    const fc = myCards().filter(c =>
+        (!exp || c.expansion === exp) && (!type || c.type === type) &&
+        hit(c.name, c.comment, c.expansion) && (!min || (c.ranking || 0) >= min));
+    const fg = myGames().filter(g =>
+        (!exp || g.expansion === exp) &&
+        hit(g.name, g.heroes, g.expansion, g.comment) && (!min || (g.ranking || 0) >= min));
+    return { fc, fg };
+}
 
-        // Utility functions
-        function getExpansions() {
-            const expansions = [...new Set(cardData.map(c => c.expansion))].sort();
-            return expansions;
-        }
+function sorted(list, which) {
+    const { col, dir } = sortState[which];
+    if (!col) return list;
+    return [...list].sort((a, b) => {
+        let x = a[col], y = b[col];
+        if (x == null) return 1; if (y == null) return -1;
+        if (typeof x === 'string') return x.localeCompare(y) * dir;
+        return (x - y) * dir;
+    });
+}
 
-        // Expansion colors - distinct colors for each expansion
-        const expansionColors = {
-            "Annihilation": "#8B5CF6",
-            "Ant-Man": "#EF4444",
-            "Black Panther": "#6366F1",
-            "Black Widow": "#EC4899",
-            "Captain America": "#3B82F6",
-            "Champions": "#F59E0B",
-            "Civil War": "#6B7280",
-            "Core set": "#10B981",
-            "Dark City": "#7C3AED",
-            "Deadpool": "#DC2626",
-            "Dimensions": "#14B8A6",
-            "Doctor Strange": "#8B5CF6",
-            "Fantastic Four": "#0EA5E9",
-            "Heroes of Asgard": "#FBBF24",
-            "Into the cosmos": "#6366F1",
-            "Midnight Sons": "#4B5563",
-            "New Mutants": "#F472B6",
-            "Noir": "#374151",
-            "Paint the town red": "#EF4444",
-            "Realm of Kings": "#A855F7",
-            "Revelations": "#22C55E",
-            "S.H.I.E.L.D.S.": "#0284C7",
-            "Secret Wars 2": "#EA580C",
-            "Secret Wars vol1": "#F97316",
-            "Secret Wars vol2": "#FB923C",
-            "Venom": "#1F2937",
-            "World war Hulk": "#22C55E",
-            "X-Men": "#FACC15"
-        };
+function renderAll() {
+    const { fc, fg } = filtered();
+    renderDash();
+    renderGames(fg);
+    renderCards(fc);
+    renderCharts(fc, fg);
+    $('dataCount').textContent = `${myCards().length} cards and ${myGames().length} game results in ${cfg().full}.`;
+}
 
-        function getExpansionColor(expansion) {
-            return expansionColors[expansion] || "#6B7280";
-        }
+function renderDash() {
+    const f = cfg(), s = summarize(myGames());
+    const c = myCards();
+    const typeStats = f.types.slice(0, 2).map(t => `<div class="stat"><span>${esc(plural(t))} rated</span><b>${c.filter(x => x.type === t).length}</b></div>`).join('');
+    $('dash').innerHTML = `
+        <div class="stat"><span>Games played</span><b>${s.played}</b></div>
+        <div class="stat win"><span>Wins</span><b>${s.wins}</b></div>
+        <div class="stat loss"><span>Losses</span><b>${s.losses}</b></div>
+        <div class="stat"><span>Win rate</span><b>${s.rate}</b></div>
+        <div class="stat hi"><span>High score</span><b>${s.high}</b></div>
+        <div class="stat"><span>Cards rated</span><b>${c.length}</b></div>
+        ${typeStats}`;
+}
 
-        function populateFilters() {
-            const expansionSelect = document.getElementById('filterExpansion');
-            getExpansions().forEach(exp => {
-                const option = document.createElement('option');
-                option.value = exp;
-                option.textContent = exp;
-                expansionSelect.appendChild(option);
-            });
-        }
+function sortHead(label, col, which) {
+    const s = sortState[which];
+    const cls = s.col === col ? `sortable sorted${s.dir < 0 ? ' desc' : ''}` : 'sortable';
+    return `<th class="${cls}" data-sort="${col}" data-table="${which}">${esc(label)}</th>`;
+}
 
-        function renderStars(rating) {
-            if (!rating) return '-';
-            const maxStars = 10;
-            let stars = '';
-            for (let i = 1; i <= maxStars; i++) {
-                if (i <= rating) {
-                    stars += '<span class="star filled">★</span>';
-                } else {
-                    stars += '<span class="star">★</span>';
-                }
-            }
-            return `<span class="rating">${stars}<span class="rating-number">${rating}</span></span>`;
-        }
+function renderGames(list) {
+    const f = cfg(), detailed = f.scoring === 'detailed';
+    $('gamesHead').innerHTML = `<tr>
+        ${sortHead('Expansion', 'expansion', 'games')}
+        ${sortHead(f.scenario, 'name', 'games')}
+        ${detailed ? sortHead('Victory pile', 'victoryPile', 'games') + '<th>Bystanders</th><th>Twists</th><th>Escaped</th>' : ''}
+        ${sortHead('Score', 'sum', 'games')}
+        <th>${esc(f.used)}</th>
+        ${sortHead('Rating', 'ranking', 'games')}
+        <th>Result</th><th>Comment</th><th></th></tr>`;
+    const cols = detailed ? 11 : 8;
+    const rows = sorted(list, 'games');
+    if (!rows.length) {
+        $('gamesBody').innerHTML = `<tr><td colspan="${cols}" class="empty">${myGames().length ? 'No results match the filters.' : 'No games logged yet. Use “+ Add” to log the first one.'}</td></tr>`;
+        return;
+    }
+    $('gamesBody').innerHTML = rows.map(g => {
+        const w = isWin(g.result);
+        const resultText = w === true ? 'Win' : w === false ? 'Loss' : '–';
+        const extra = g.result && !['vann', 'förlorade'].includes(g.result.toLowerCase()) ? `<div class="muted">${esc(g.result)}</div>` : '';
+        return `<tr>
+            <td><span class="tag" style="background:${expansionColor(g.expansion)}">${esc(g.expansion)}</span></td>
+            <td><strong>${esc(g.name)}</strong></td>
+            ${detailed ? `<td class="num">${g.victoryPile}</td>
+                <td class="num">${g.bystanders} <span class="pen">(${g.bystanderPenalty})</span></td>
+                <td class="num">${g.twists} <span class="pen">(${g.twistPenalty})</span></td>
+                <td class="num">${g.escaped} <span class="pen">(${g.escapePenalty})</span></td>` : ''}
+            <td class="num"><strong>${g.sum || (detailed ? 0 : '–')}</strong></td>
+            <td>${esc(g.heroes) || '<span class="muted">–</span>'}</td>
+            <td>${ratingHtml(g.ranking)}</td>
+            <td class="${w === true ? 'res-win' : w === false ? 'res-loss' : ''}">${resultText}${extra}</td>
+            <td>${esc(g.comment) || '<span class="muted">–</span>'}</td>
+            <td><div class="row-actions">
+                <button class="icon-btn" data-edit-game="${g.id}" title="Edit">✎</button>
+                <button class="icon-btn" data-del-game="${g.id}" title="Delete">✕</button></div></td>
+        </tr>`;
+    }).join('');
+}
 
-        function getTypeClass(type) {
-            return `type-${type.toLowerCase()}`;
-        }
+function renderCards(list) {
+    document.querySelectorAll('#panel-cards th.sortable').forEach(th => {
+        const s = sortState.cards;
+        th.className = s.col === th.dataset.sort ? `sortable sorted${s.dir < 0 ? ' desc' : ''}` : 'sortable';
+        th.dataset.table = 'cards';
+    });
+    const rows = sorted(list, 'cards');
+    if (!rows.length) {
+        $('cardsBody').innerHTML = `<tr><td colspan="6" class="empty">${myCards().length ? 'No cards match the filters.' : 'No cards rated yet.'}</td></tr>`;
+        return;
+    }
+    $('cardsBody').innerHTML = rows.map(c => `<tr>
+        <td><span class="tag" style="background:${expansionColor(c.expansion)}">${esc(c.expansion)}</span></td>
+        <td class="type">${esc(c.type)}</td>
+        <td><strong>${esc(c.name)}</strong></td>
+        <td>${esc(c.comment) || '<span class="muted">–</span>'}</td>
+        <td>${ratingHtml(c.ranking)}</td>
+        <td><div class="row-actions">
+            <button class="icon-btn" data-edit-card="${c.id}" title="Edit">✎</button>
+            <button class="icon-btn" data-del-card="${c.id}" title="Delete">✕</button></div></td>
+    </tr>`).join('');
+}
 
-        function isWin(result) {
-            if (!result) return null;
-            const lower = result.toLowerCase();
-            if (lower.includes('vann') || lower.includes('win')) return true;
-            if (lower.includes('förlorade') || lower.includes('lost') || lower.includes('loss')) return false;
-            return null;
-        }
+function barChart(title, items, max) {
+    const body = items.length
+        ? items.map(i => `<div class="bar"><span class="lbl" title="${esc(i.name)}">${esc(i.name)}</span>
+            <div class="track"><div class="fill" style="width:${Math.max(0, i.value) / max * 100}%"></div></div>
+            <span class="val">${i.value}</span></div>`).join('')
+        : '<p class="muted">Nothing rated yet.</p>';
+    return `<div class="chart"><h3>${esc(title)}</h3>${body}</div>`;
+}
 
-        // Rendering functions
-        function renderCardsTable(data) {
-            const tbody = document.getElementById('cardsBody');
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="no-results">No cards found matching your criteria</td></tr>';
-                return;
-            }
-            tbody.innerHTML = data.map((card, index) => `
-                <tr>
-                    <td><span class="expansion-tag" style="background-color: ${getExpansionColor(card.expansion)}">${card.expansion}</span></td>
-                    <td><span class="card-type">${card.type}</span></td>
-                    <td><strong>${card.name}</strong></td>
-                    <td>${card.comment || '-'}</td>
-                    <td>${renderStars(card.ranking)}</td>
-                    <td class="actions-cell">
-                        <div class="row-actions">
-                            <button class="btn-icon btn-edit" onclick="editCard('${card.id}')" title="Edit">✎</button>
-                            <button class="btn-icon btn-delete" onclick="deleteCard('${card.id}')" title="Delete">✕</button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-        }
+function renderCharts(fc, fg) {
+    const f = cfg();
+    const top = t => fc.filter(c => c.type === t && c.ranking).sort((a, b) => b.ranking - a.ranking).slice(0, 8)
+        .map(c => ({ name: c.name, value: c.ranking }));
+    const byExp = {};
+    fc.filter(c => c.ranking).forEach(c => { (byExp[c.expansion] ??= []).push(c.ranking); });
+    const expAvg = Object.entries(byExp).map(([name, r]) => ({ name, value: +(r.reduce((a, b) => a + b, 0) / r.length).toFixed(1) }))
+        .sort((a, b) => b.value - a.value).slice(0, 8);
+    const scored = fg.filter(g => g.sum).sort((a, b) => b.sum - a.sum).slice(0, 8).map(g => ({ name: g.name, value: g.sum }));
+    const maxScore = Math.max(1, ...scored.map(s => s.value));
+    $('charts').innerHTML =
+        f.types.filter(t => t !== 'Villain').map(t => barChart(`Top rated ${plural(t).toLowerCase()}`, top(t), 10)).join('') +
+        barChart('Expansions by average rating', expAvg, 10) +
+        barChart('Highest scores', scored, maxScore);
+}
 
-        function renderGamesTable(data) {
-            const tbody = document.getElementById('gamesBody');
-            const gamesWithResults = data.filter(g => g.victoryPile > 0 || g.sum !== 0);
-            if (gamesWithResults.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="no-results">No game results found</td></tr>';
-                return;
-            }
-            tbody.innerHTML = gamesWithResults.map(game => {
-                const winStatus = isWin(game.result);
-                return `
-                <tr>
-                    <td><span class="expansion-tag" style="background-color: ${getExpansionColor(game.expansion)}">${game.expansion}</span></td>
-                    <td><strong>${game.name}</strong></td>
-                    <td>${game.victoryPile}</td>
-                    <td>${game.bystanders} <span class="score-negative">(${game.bystanderPenalty})</span></td>
-                    <td>${game.twists} <span class="score-negative">(${game.twistPenalty})</span></td>
-                    <td>${game.escaped} <span class="score-negative">(${game.escapePenalty})</span></td>
-                    <td class="${game.sum >= 0 ? 'score-positive' : 'score-negative'}"><strong>${game.sum}</strong></td>
-                    <td class="game-details">${game.heroes || '-'}</td>
-                    <td class="${winStatus === true ? 'result-win' : winStatus === false ? 'result-loss' : ''}">${winStatus === true ? 'WIN' : winStatus === false ? 'LOSS' : '-'}</td>
-                    <td class="actions-cell">
-                        <div class="row-actions">
-                            <button class="btn-icon btn-edit" onclick="editGame('${game.id}')" title="Edit">✎</button>
-                            <button class="btn-icon btn-delete" onclick="deleteGame('${game.id}')" title="Delete">✕</button>
-                        </div>
-                    </td>
-                </tr>
-            `}).join('');
-        }
-
-        function renderStats(filteredCards = cardData, filteredGames = gameData) {
-            // Top Heroes
-            const heroes = filteredCards.filter(c => c.type === 'Hero' && c.ranking);
-            const topHeroes = [...heroes].sort((a, b) => b.ranking - a.ranking).slice(0, 8);
-            renderBarChart('topHeroesChart', topHeroes, 10);
-
-            // Top Schemes
-            const schemes = filteredCards.filter(c => c.type === 'Scheme' && c.ranking);
-            const topSchemes = [...schemes].sort((a, b) => b.ranking - a.ranking).slice(0, 8);
-            renderBarChart('topSchemesChart', topSchemes, 10);
-
-            // Top Masterminds
-            const masterminds = filteredCards.filter(c => c.type === 'Mastermind' && c.ranking);
-            const topMasterminds = [...masterminds].sort((a, b) => b.ranking - a.ranking).slice(0, 8);
-            renderBarChart('topMastermindsChart', topMasterminds, 10);
-
-            // Expansion Ratings
-            const expansionRatings = {};
-            filteredCards.filter(c => c.ranking).forEach(card => {
-                if (!expansionRatings[card.expansion]) {
-                    expansionRatings[card.expansion] = { total: 0, count: 0 };
-                }
-                expansionRatings[card.expansion].total += card.ranking;
-                expansionRatings[card.expansion].count++;
-            });
-            const avgRatings = Object.entries(expansionRatings)
-                .map(([name, data]) => ({ name, ranking: (data.total / data.count).toFixed(1) }))
-                .sort((a, b) => b.ranking - a.ranking)
-                .slice(0, 8);
-            renderBarChart('expansionRatingsChart', avgRatings, 10);
-        }
-
-        function renderBarChart(containerId, data, maxValue) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = data.map(item => `
-                <div class="bar-item">
-                    <span class="bar-label" title="${item.name}">${item.name}</span>
-                    <div class="bar-container">
-                        <div class="bar-fill" style="width: ${(item.ranking / maxValue) * 100}%"></div>
-                    </div>
-                    <span class="bar-value">${item.ranking}</span>
-                </div>
-            `).join('');
-        }
-
-        function updateDashboard() {
-            const totalCards = cardData.length;
-            const totalHeroes = cardData.filter(c => c.type === 'Hero').length;
-            const totalMasterminds = cardData.filter(c => c.type === 'Mastermind').length;
-            const totalSchemes = gameData.length;
-            const gamesPlayed = gameData.filter(g => g.result).length;
-            const wins = gameData.filter(g => isWin(g.result) === true).length;
-            const losses = gameData.filter(g => isWin(g.result) === false).length;
-            const avgScore = gameData.filter(g => g.sum !== 0).reduce((acc, g) => acc + g.sum, 0) / gameData.filter(g => g.sum !== 0).length;
-            const highScore = Math.max(...gameData.map(g => g.sum));
-
-            document.getElementById('statsDashboard').innerHTML = `
-                <div class="stat-card">
-                    <h3>Total Cards</h3>
-                    <div class="number">${totalCards}</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Heroes</h3>
-                    <div class="number">${totalHeroes}</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Masterminds</h3>
-                    <div class="number">${totalMasterminds}</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Schemes</h3>
-                    <div class="number">${totalSchemes}</div>
-                </div>
-                <div class="stat-card wins">
-                    <h3>Wins</h3>
-                    <div class="number">${wins}</div>
-                </div>
-                <div class="stat-card losses">
-                    <h3>Losses</h3>
-                    <div class="number">${losses}</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Win Rate</h3>
-                    <div class="number">${gamesPlayed > 0 ? Math.round((wins / (wins + losses)) * 100) : 0}%</div>
-                </div>
-                <div class="stat-card">
-                    <h3>High Score</h3>
-                    <div class="number">${highScore}</div>
-                </div>
-            `;
-        }
-
-        // Filtering
-        function filterData() {
-            const expansion = document.getElementById('filterExpansion').value;
-            const type = document.getElementById('filterType').value;
-            const search = document.getElementById('searchInput').value.toLowerCase().trim();
-            const minRating = parseInt(document.getElementById('filterRating').value) || 0;
-
-            let filteredCards = cardData.filter(card => {
-                if (expansion && card.expansion !== expansion) return false;
-                if (type && card.type !== type) return false;
-                if (search) {
-                    const nameMatch = card.name.toLowerCase().includes(search);
-                    const commentMatch = card.comment && card.comment.toLowerCase().includes(search);
-                    const expansionMatch = card.expansion.toLowerCase().includes(search);
-                    if (!nameMatch && !commentMatch && !expansionMatch) return false;
-                }
-                if (minRating && (!card.ranking || card.ranking < minRating)) return false;
-                return true;
-            });
-
-            let filteredGames = gameData.filter(game => {
-                if (expansion && game.expansion !== expansion) return false;
-                if (search) {
-                    const nameMatch = game.name.toLowerCase().includes(search);
-                    const heroesMatch = game.heroes && game.heroes.toLowerCase().includes(search);
-                    const expansionMatch = game.expansion.toLowerCase().includes(search);
-                    if (!nameMatch && !heroesMatch && !expansionMatch) return false;
-                }
-                if (minRating && (!game.ranking || game.ranking < minRating)) return false;
-                return true;
-            });
-
-            renderCardsTable(filteredCards);
-            renderGamesTable(filteredGames);
-            renderStats(filteredCards, filteredGames);
-        }
-
-        // Sorting
-        let sortColumn = '';
-        let sortDirection = 'asc';
-
-        function sortTable(column, tableId) {
-            if (sortColumn === column) {
-                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortColumn = column;
-                sortDirection = 'asc';
-            }
-
-            const data = tableId === 'cards' ? [...cardData] : [...gameData];
-            data.sort((a, b) => {
-                let valA = a[column];
-                let valB = b[column];
-                if (typeof valA === 'string') valA = valA.toLowerCase();
-                if (typeof valB === 'string') valB = valB.toLowerCase();
-                if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
-                if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
-                return 0;
-            });
-
-            if (tableId === 'cards') {
-                renderCardsTable(data);
-            } else {
-                renderGamesTable(data);
-            }
-        }
-
-        // Tab switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
-            });
+/* ---------- API ---------- */
+function getPassword() {
+    let pw = localStorage.getItem('editPassword');
+    if (!pw) {
+        pw = prompt('Edit password:');
+        if (pw) localStorage.setItem('editPassword', pw);
+    }
+    return pw;
+}
+async function api(action, payload) {
+    const password = getPassword();
+    if (!password) return null;
+    try {
+        const res = await fetch(`${API_URL}?action=${action}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...payload, password }),
         });
-
-        // Event listeners
-        document.getElementById('filterExpansion').addEventListener('change', filterData);
-        document.getElementById('filterType').addEventListener('change', filterData);
-        document.getElementById('searchInput').addEventListener('input', filterData);
-        document.getElementById('searchInput').addEventListener('keyup', filterData);
-        document.getElementById('filterRating').addEventListener('change', filterData);
-
-        document.querySelectorAll('#cardsTable th.sortable').forEach(th => {
-            th.addEventListener('click', () => sortTable(th.dataset.sort, 'cards'));
-        });
-
-        document.querySelectorAll('#gamesTable th.sortable').forEach(th => {
-            th.addEventListener('click', () => sortTable(th.dataset.sort, 'games'));
-        });
-
-        // Make filterData globally accessible for inline handlers
-        window.filterData = filterData;
-
-        // Database API handling
-        let editingCardId = null;
-        let editingGameId = null;
-
-        async function loadDataFromAPI() {
-            try {
-                const response = await fetch(`${API_URL}?action=load`);
-                const data = await response.json();
-
-                if (data.error) {
-                    console.error('API Error:', data.error);
-                    showToast('Error loading data: ' + data.error);
-                    return false;
-                }
-
-                cardData = data.cards || [];
-                gameData = data.games || [];
-                updateDataCount();
-                return true;
-            } catch (error) {
-                console.error('Failed to load data:', error);
-                showToast('Failed to connect to database');
-                return false;
-            }
-        }
-
-        async function saveCard(card) {
-            const password = getPassword();
-            if (!password) return false;
-
-            try {
-                card.password = password;
-                const response = await fetch(`${API_URL}?action=saveCard`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(card)
-                });
-                const result = await response.json();
-
-                if (result.error) {
-                    if (result.error === 'Invalid password') {
-                        localStorage.removeItem('editPassword');
-                        showToast('Wrong password');
-                    }
-                    return false;
-                }
-
-                if (result.success) {
-                    card.id = result.id;
-                    cardData.push(card);
-                    updateDataCount();
-                    return true;
-                }
-                return false;
-            } catch (error) {
-                console.error('Failed to save card:', error);
-                showToast('Failed to save card');
-                return false;
-            }
-        }
-
-        async function updateCard(id, updatedCard) {
-            const password = getPassword();
-            if (!password) return false;
-
-            try {
-                updatedCard.id = id;
-                updatedCard.password = password;
-                const response = await fetch(`${API_URL}?action=saveCard`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updatedCard)
-                });
-                const result = await response.json();
-
-                if (result.error === 'Invalid password') {
-                    localStorage.removeItem('editPassword');
-                    showToast('Wrong password');
-                    return false;
-                }
-
-                if (result.success) {
-                    const cardIndex = cardData.findIndex(c => c.id == id);
-                    if (cardIndex !== -1) {
-                        cardData[cardIndex] = updatedCard;
-                    }
-                    updateDataCount();
-                    return true;
-                }
-                return false;
-            } catch (error) {
-                console.error('Failed to update card:', error);
-                showToast('Failed to update card');
-                return false;
-            }
-        }
-
-        async function deleteCard(id) {
-            if (!confirm('Delete this card?')) return;
-
-            const password = getPassword();
-            if (!password) return;
-
-            try {
-                const response = await fetch(`${API_URL}?action=deleteCard`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: id, password: password })
-                });
-                const result = await response.json();
-
-                if (result.error === 'Invalid password') {
-                    localStorage.removeItem('editPassword');
-                    showToast('Wrong password');
-                    return;
-                }
-
-                if (result.success) {
-                    const index = cardData.findIndex(c => c.id == id);
-                    if (index !== -1) {
-                        cardData.splice(index, 1);
-                    }
-                    filterData();
-                    updateDashboard();
-                    showToast('Card deleted');
-                }
-            } catch (error) {
-                console.error('Failed to delete card:', error);
-                showToast('Failed to delete card');
-            }
-        }
-
-        function editCard(id) {
-            const card = cardData.find(c => c.id == id);
-            if (!card) return;
-
-            editingCardId = id;
-
-            document.getElementById('cardExpansion').value = card.expansion;
-            document.getElementById('cardType').value = card.type;
-            document.getElementById('cardName').value = card.name;
-            document.getElementById('cardComment').value = card.comment || '';
-            document.getElementById('cardRating').value = card.ranking || '';
-
-            // Switch to Add Data tab and scroll to form
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelector('[data-tab="addData"]').classList.add('active');
-            document.getElementById('addDataTab').classList.add('active');
-            document.getElementById('addDataTab').classList.add('editing-mode');
-
-            document.getElementById('cardForm').querySelector('button[type="submit"]').textContent = 'Update Card';
-            document.getElementById('cardForm').querySelector('.btn-cancel').style.display = 'inline-block';
-            document.getElementById('cardForm').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        async function saveGame(game) {
-            const password = getPassword();
-            if (!password) return false;
-
-            try {
-                game.password = password;
-                const response = await fetch(`${API_URL}?action=saveGame`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(game)
-                });
-                const result = await response.json();
-
-                if (result.error === 'Invalid password') {
-                    localStorage.removeItem('editPassword');
-                    showToast('Wrong password');
-                    return false;
-                }
-
-                if (result.success) {
-                    game.id = result.id;
-                    gameData.push(game);
-                    updateDataCount();
-                    return true;
-                }
-                return false;
-            } catch (error) {
-                console.error('Failed to save game:', error);
-                showToast('Failed to save game');
-                return false;
-            }
-        }
-
-        async function updateGame(id, updatedGame) {
-            const password = getPassword();
-            if (!password) return false;
-
-            try {
-                updatedGame.id = id;
-                updatedGame.password = password;
-                const response = await fetch(`${API_URL}?action=saveGame`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updatedGame)
-                });
-                const result = await response.json();
-
-                if (result.error === 'Invalid password') {
-                    localStorage.removeItem('editPassword');
-                    showToast('Wrong password');
-                    return false;
-                }
-
-                if (result.success) {
-                    const gameIndex = gameData.findIndex(g => g.id == id);
-                    if (gameIndex !== -1) {
-                        gameData[gameIndex] = updatedGame;
-                    }
-                    updateDataCount();
-                    return true;
-                }
-                return false;
-            } catch (error) {
-                console.error('Failed to update game:', error);
-                showToast('Failed to update game');
-                return false;
-            }
-        }
-
-        async function deleteGame(id) {
-            if (!confirm('Delete this game result?')) return;
-
-            const password = getPassword();
-            if (!password) return;
-
-            try {
-                const response = await fetch(`${API_URL}?action=deleteGame`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: id, password: password })
-                });
-                const result = await response.json();
-
-                if (result.error === 'Invalid password') {
-                    localStorage.removeItem('editPassword');
-                    showToast('Wrong password');
-                    return;
-                }
-
-                if (result.success) {
-                    const index = gameData.findIndex(g => g.id == id);
-                    if (index !== -1) {
-                        gameData.splice(index, 1);
-                    }
-                    filterData();
-                    updateDashboard();
-                    showToast('Game result deleted');
-                }
-            } catch (error) {
-                console.error('Failed to delete game:', error);
-                showToast('Failed to delete game');
-            }
-        }
-
-        function editGame(id) {
-            const game = gameData.find(g => g.id == id);
-            if (!game) return;
-
-            editingGameId = id;
-
-            document.getElementById('gameExpansion').value = game.expansion;
-            document.getElementById('gameName').value = game.name;
-            document.getElementById('gameComment').value = game.comment || '';
-            document.getElementById('gameRating').value = game.ranking || '';
-            document.getElementById('gameVictoryPile').value = game.victoryPile || 0;
-            document.getElementById('gameBystanders').value = game.bystanders || 0;
-            document.getElementById('gameTwists').value = game.twists || 0;
-            document.getElementById('gameEscaped').value = game.escaped || 0;
-            document.getElementById('gameHeroes').value = game.heroes || '';
-            document.getElementById('gameResult').value = game.result || '';
-
-            // Switch to Add Data tab and scroll to form
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelector('[data-tab="addData"]').classList.add('active');
-            document.getElementById('addDataTab').classList.add('active');
-            document.getElementById('addDataTab').classList.add('editing-mode');
-
-            document.getElementById('gameForm').querySelector('button[type="submit"]').textContent = 'Update Game Result';
-            document.getElementById('gameForm').querySelector('.btn-cancel').style.display = 'inline-block';
-            document.getElementById('gameForm').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function resetCardForm() {
-            editingCardId = null;
-            document.getElementById('cardForm').reset();
-            document.getElementById('cardForm').querySelector('button[type="submit"]').textContent = 'Add Card';
-            document.getElementById('cardForm').querySelector('.btn-cancel').style.display = 'none';
-            document.getElementById('addDataTab').classList.remove('editing-mode');
-        }
-
-        function resetGameForm() {
-            editingGameId = null;
-            document.getElementById('gameForm').reset();
-            document.getElementById('gameForm').querySelector('button[type="submit"]').textContent = 'Add Game Result';
-            document.getElementById('gameForm').querySelector('.btn-cancel').style.display = 'none';
-            document.getElementById('addDataTab').classList.remove('editing-mode');
-        }
-
-        function updateDataCount() {
-            const countEl = document.getElementById('dataCount');
-            if (countEl) {
-                countEl.textContent = `Database: ${cardData.length} cards, ${gameData.length} games`;
-            }
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-
-        function exportData() {
-            const data = {
-                cards: cardData,
-                games: gameData
-            };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'marvel-legendary-data.json';
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('Data exported!');
-        }
-
-        async function importInitialData() {
-            if (!confirm('Import initial dataset to database? This will replace all existing data.')) return;
-
-            const password = getPassword();
-            if (!password) return;
-
-            try {
-                const response = await fetch(`${API_URL}?action=importInitialData`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        cards: INITIAL_CARD_DATA,
-                        games: INITIAL_GAME_DATA,
-                        password: password
-                    })
-                });
-                const result = await response.json();
-
-                if (result.error === 'Invalid password') {
-                    localStorage.removeItem('editPassword');
-                    showToast('Wrong password');
-                    return;
-                }
-
-                if (result.success) {
-                    showToast(`Imported ${result.cardsImported} cards and ${result.gamesImported} games!`);
-                    await loadDataFromAPI();
-                    filterData();
-                    updateDashboard();
-                } else {
-                    showToast('Import failed: ' + (result.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Import failed:', error);
-                showToast('Import failed: ' + error.message);
-            }
-        }
-
-        function clearCustomData() {
-            showToast('Use phpMyAdmin to manage database directly');
-        }
-
-        // Form handlers
-        document.getElementById('cardForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const card = {
-                expansion: document.getElementById('cardExpansion').value,
-                type: document.getElementById('cardType').value,
-                name: document.getElementById('cardName').value,
-                comment: document.getElementById('cardComment').value,
-                ranking: parseInt(document.getElementById('cardRating').value) || null
-            };
-
-            if (editingCardId) {
-                const success = await updateCard(editingCardId, card);
-                if (success) {
-                    resetCardForm();
-                    showToast('Card updated successfully!');
-                }
-            } else {
-                const success = await saveCard(card);
-                if (success) {
-                    this.reset();
-                    showToast('Card added successfully!');
-                }
-            }
-
-            // Refresh displays
-            filterData();
-            updateDashboard();
-        });
-
-        document.getElementById('gameForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const twists = parseInt(document.getElementById('gameTwists').value) || 0;
-            const escaped = parseInt(document.getElementById('gameEscaped').value) || 0;
-            const bystanders = parseInt(document.getElementById('gameBystanders').value) || 0;
-            const victoryPile = parseInt(document.getElementById('gameVictoryPile').value) || 0;
-            const twistPenalty = twists * -3;
-            const escapePenalty = escaped * -1;
-            const bystanderPenalty = bystanders * -4;
-            const sum = victoryPile + bystanderPenalty + twistPenalty + escapePenalty;
-
-            const game = {
-                expansion: document.getElementById('gameExpansion').value,
-                name: document.getElementById('gameName').value,
-                comment: document.getElementById('gameComment').value,
-                ranking: parseInt(document.getElementById('gameRating').value) || null,
-                victoryPile: victoryPile,
-                bystanders: bystanders,
-                bystanderPenalty: bystanderPenalty,
-                twists: twists,
-                twistPenalty: twistPenalty,
-                escaped: escaped,
-                escapePenalty: escapePenalty,
-                sum: sum,
-                heroes: document.getElementById('gameHeroes').value,
-                result: document.getElementById('gameResult').value
-            };
-
-            if (editingGameId) {
-                const success = await updateGame(editingGameId, game);
-                if (success) {
-                    resetGameForm();
-                    showToast('Game result updated successfully!');
-                }
-            } else {
-                const success = await saveGame(game);
-                if (success) {
-                    this.reset();
-                    showToast('Game result added successfully!');
-                }
-            }
-
-            // Refresh displays
-            filterData();
-            updateDashboard();
-        });
-
-        // Make functions globally accessible
-        window.exportData = exportData;
-        window.clearCustomData = clearCustomData;
-        window.importInitialData = importInitialData;
-        window.editCard = editCard;
-        window.deleteCard = deleteCard;
-        window.editGame = editGame;
-        window.deleteGame = deleteGame;
-        window.resetCardForm = resetCardForm;
-        window.resetGameForm = resetGameForm;
-
-        // Initialize
-        async function init() {
-            const loaded = await loadDataFromAPI();
-
-            if (loaded && cardData.length > 0) {
-                populateFilters();
-                renderCardsTable(cardData);
-                renderGamesTable(gameData);
-                updateDashboard();
-                renderStats();
-            } else {
-                // Show prominent import message
-                const msg = loaded
-                    ? 'Database is empty. Click below to import your data.'
-                    : 'Could not connect to database. Make sure api.php is configured and uploaded.';
-
-                document.getElementById('cardsBody').innerHTML = `
-                    <tr><td colspan="6" style="text-align:center; padding:40px;">
-                        <p style="margin-bottom:20px; color:#888;">${msg}</p>
-                        <button class="btn btn-primary" onclick="importInitialData()" style="font-size:1.2em; padding:15px 30px;">
-                            Import Initial Dataset
-                        </button>
-                    </td></tr>`;
-
-                document.getElementById('dataCount').innerHTML = msg;
-            }
-        }
-        init();
-    </script>
+        const data = await res.json();
+        if (data.error === 'Invalid password') { localStorage.removeItem('editPassword'); toast('Wrong password. Try again.'); return null; }
+        if (data.error) { toast(data.error); return null; }
+        return data;
+    } catch (e) {
+        toast('Could not reach the server. Nothing was saved.');
+        return null;
+    }
+}
+async function load() {
+    try {
+        const res = await fetch(`${API_URL}?action=load`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        cards = data.cards || []; games = data.games || [];
+    } catch (e) {
+        toast('Could not load data: ' + e.message);
+    }
+}
+
+/* ---------- Forms ---------- */
+function computeScore() {
+    if (cfg().scoring !== 'detailed') {
+        const s = parseInt($('gScore').value);
+        return { victoryPile: 0, bystanders: 0, bystanderPenalty: 0, twists: 0, twistPenalty: 0, escaped: 0, escapePenalty: 0, sum: isNaN(s) ? 0 : s };
+    }
+    const v = parseInt($('gVictory').value) || 0, b = parseInt($('gBystanders').value) || 0;
+    const t = parseInt($('gTwists').value) || 0, e = parseInt($('gEscaped').value) || 0;
+    const bp = b * PENALTY.bystander, tp = t * PENALTY.twist, ep = e * PENALTY.escaped;
+    return { victoryPile: v, bystanders: b, bystanderPenalty: bp, twists: t, twistPenalty: tp, escaped: e, escapePenalty: ep, sum: v + bp + tp + ep };
+}
+function updatePreview() {
+    $('scorePreview').innerHTML = cfg().scoring === 'detailed' ? `Total score: <b>${computeScore().sum}</b>` : '';
+}
+
+function resetGameForm() {
+    editingGameId = null;
+    $('gameForm').reset();
+    $('gameForm').classList.remove('editing');
+    $('gameFormTitle').textContent = 'Add game result';
+    $('gameSubmit').textContent = 'Add result';
+    $('gameCancel').hidden = true;
+    [...$('gResult').options].forEach(o => { if (o.dataset.custom) o.remove(); });
+    updatePreview();
+}
+function resetCardForm() {
+    editingCardId = null;
+    $('cardForm').reset();
+    $('cardForm').classList.remove('editing');
+    $('cardFormTitle').textContent = 'Add card';
+    $('cardSubmit').textContent = 'Add card';
+    $('cardCancel').hidden = true;
+}
+function showTab(tab) {
+    activeTab = tab;
+    document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === tab));
+    document.querySelectorAll('.panel').forEach(p => p.hidden = p.id !== 'panel-' + tab);
+}
+
+function editGame(id) {
+    const g = games.find(x => x.id == id); if (!g) return;
+    resetGameForm();
+    editingGameId = g.id;
+    $('gExpansion').value = g.expansion; $('gName').value = g.name;
+    $('gRating').value = g.ranking ?? ''; $('gHeroes').value = g.heroes || ''; $('gComment').value = g.comment || '';
+    $('gVictory').value = g.victoryPile; $('gBystanders').value = g.bystanders;
+    $('gTwists').value = g.twists; $('gEscaped').value = g.escaped; $('gScore').value = g.sum || '';
+    if (g.result && ![...$('gResult').options].some(o => o.value === g.result)) {
+        const o = new Option(g.result, g.result); o.dataset.custom = '1'; $('gResult').add(o);
+    }
+    $('gResult').value = g.result || '';
+    $('gameForm').classList.add('editing');
+    $('gameFormTitle').textContent = `Edit game result: ${g.name}`;
+    $('gameSubmit').textContent = 'Save changes';
+    $('gameCancel').hidden = false;
+    updatePreview();
+    showTab('add');
+    $('gameForm').scrollIntoView({ behavior: 'smooth' });
+}
+function editCard(id) {
+    const c = cards.find(x => x.id == id); if (!c) return;
+    resetCardForm();
+    editingCardId = c.id;
+    if (![...$('cType').options].some(o => o.value === c.type)) $('cType').add(new Option(c.type));
+    $('cExpansion').value = c.expansion; $('cType').value = c.type; $('cName').value = c.name;
+    $('cRating').value = c.ranking ?? ''; $('cComment').value = c.comment || '';
+    $('cardForm').classList.add('editing');
+    $('cardFormTitle').textContent = `Edit card: ${c.name}`;
+    $('cardSubmit').textContent = 'Save changes';
+    $('cardCancel').hidden = false;
+    showTab('add');
+    $('cardForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+$('gameForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const game = {
+        franchise: current,
+        expansion: $('gExpansion').value.trim(), name: $('gName').value.trim(),
+        comment: $('gComment').value.trim(), ranking: parseInt($('gRating').value) || null,
+        heroes: $('gHeroes').value.trim(), result: $('gResult').value,
+        ...computeScore(),
+    };
+    if (editingGameId) game.id = editingGameId;
+    const res = await api('saveGame', game);
+    if (!res) return;
+    game.id = res.id;
+    const i = games.findIndex(g => g.id === game.id);
+    if (i >= 0) games[i] = game; else games.push(game);
+    toast(editingGameId ? 'Game result saved' : 'Game result added');
+    enterFranchise(); renderShelf(); showTab('games');
+});
+$('cardForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const card = {
+        franchise: current,
+        expansion: $('cExpansion').value.trim(), type: $('cType').value, name: $('cName').value.trim(),
+        comment: $('cComment').value.trim(), ranking: parseInt($('cRating').value) || null,
+    };
+    if (editingCardId) card.id = editingCardId;
+    const res = await api('saveCard', card);
+    if (!res) return;
+    card.id = res.id;
+    const i = cards.findIndex(c => c.id === card.id);
+    if (i >= 0) cards[i] = card; else cards.push(card);
+    toast(editingCardId ? 'Card saved' : 'Card added');
+    const wasEditing = !!editingCardId;
+    enterFranchise();
+    showTab(wasEditing ? 'cards' : 'add');
+});
+
+async function remove(kind, id) {
+    const list = kind === 'card' ? cards : games;
+    const item = list.find(x => x.id == id); if (!item) return;
+    if (!confirm(`Delete “${item.name}”? This can’t be undone.`)) return;
+    const res = await api(kind === 'card' ? 'deleteCard' : 'deleteGame', { id: item.id });
+    if (!res) return;
+    if (kind === 'card') cards = cards.filter(c => c.id !== item.id); else games = games.filter(g => g.id !== item.id);
+    toast(`Deleted ${item.name}`);
+    renderShelf(); renderAll();
+}
+
+function download(name, data) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    a.download = name; a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ---------- Events ---------- */
+document.addEventListener('click', e => {
+    const t = e.target.closest('button, th'); if (!t) return;
+    if (t.dataset.f) return go(t.dataset.f);
+    if (t.dataset.tab) return showTab(t.dataset.tab);
+    if (t.dataset.editGame) return editGame(t.dataset.editGame);
+    if (t.dataset.editCard) return editCard(t.dataset.editCard);
+    if (t.dataset.delGame) return remove('game', t.dataset.delGame);
+    if (t.dataset.delCard) return remove('card', t.dataset.delCard);
+    if (t.matches('th.sortable')) {
+        const which = t.dataset.table, s = sortState[which];
+        s.dir = s.col === t.dataset.sort ? -s.dir : (['ranking', 'sum', 'victoryPile'].includes(t.dataset.sort) ? -1 : 1);
+        s.col = t.dataset.sort;
+        renderAll();
+    }
+});
+$('homeBtn').addEventListener('click', () => go(null));
+['fExpansion', 'fType', 'fRating'].forEach(id => $(id).addEventListener('change', renderAll));
+$('fSearch').addEventListener('input', renderAll);
+['gVictory', 'gBystanders', 'gTwists', 'gEscaped'].forEach(id => $(id).addEventListener('input', updatePreview));
+$('gameCancel').addEventListener('click', resetGameForm);
+$('cardCancel').addEventListener('click', resetCardForm);
+$('exportBtn').addEventListener('click', () => download(`legendary-${current}.json`, { cards: myCards(), games: myGames() }));
+$('exportAllBtn').addEventListener('click', () => download('legendary-all.json', { cards, games }));
+$('logoutBtn').addEventListener('click', () => { localStorage.removeItem('editPassword'); toast('Edit password forgotten on this device'); });
+window.addEventListener('hashchange', route);
+
+(async () => { await load(); route(); })();
+</script>
 </body>
 </html>

@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(start \"\" \"C:\\\\Users\\\\jonas\\\\claude_projects\\\\marvel_legendary_stats\\\\index.html\")"
-    ]
-  }
-}

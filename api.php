@@ -1,39 +1,36 @@
 <?php
-// Marvel Legendary Stats API
+// Legendary score board API (Marvel, Alien, James Bond, Predator, Matrix, Firefly)
+// Secrets live in config.php, which is NOT in git. See config.example.php.
 
-// EDIT PASSWORD - Change this to your secret password
-$edit_password = '131313';
+header('Content-Type: application/json; charset=utf-8');
 
-// Database configuration for one.com
-$db_host = 'globbin.se.mysql';
-$db_name = 'globbin_se';
-$db_user = 'globbin_se';
-$db_pass = '131313';
-
-// Enable CORS for local testing (remove in production if not needed)
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
+$configFile = __DIR__ . '/config.php';
+if (!file_exists($configFile)) {
+    http_response_code(500);
+    echo json_encode(['error' => 'config.php is missing on the server']);
+    exit;
 }
+$config = require $configFile;
 
-// Connect to database
+const FRANCHISES = ['marvel', 'alien', 'bond', 'predator', 'matrix', 'firefly'];
+
 try {
-    $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass);
+    $pdo = new PDO(
+        "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4",
+        $config['db_user'],
+        $config['db_pass']
+    );
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Database connection failed']);
     exit;
 }
 
-// Initialize tables if they don't exist
-function initTables($pdo) {
+function initTables(PDO $pdo) {
     $pdo->exec("CREATE TABLE IF NOT EXISTS cards (
         id INT AUTO_INCREMENT PRIMARY KEY,
+        franchise VARCHAR(32) NOT NULL DEFAULT 'marvel',
         expansion VARCHAR(255) NOT NULL,
         type VARCHAR(50) NOT NULL,
         name VARCHAR(255) NOT NULL,
@@ -45,6 +42,7 @@ function initTables($pdo) {
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS games (
         id INT AUTO_INCREMENT PRIMARY KEY,
+        franchise VARCHAR(32) NOT NULL DEFAULT 'marvel',
         expansion VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
         comment TEXT,
@@ -62,142 +60,137 @@ function initTables($pdo) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-}
 
-// Initialize tables on first run
+    // Migration from the Marvel-only version: existing rows become 'marvel'.
+    foreach (['cards', 'games'] as $table) {
+        $has = $pdo->query("SHOW COLUMNS FROM `$table` LIKE 'franchise'")->fetch();
+        if (!$has) {
+            $pdo->exec("ALTER TABLE `$table` ADD COLUMN franchise VARCHAR(32) NOT NULL DEFAULT 'marvel' AFTER id");
+        }
+    }
+}
 initTables($pdo);
 
-// Get action from request
-$action = $_GET['action'] ?? $_POST['action'] ?? '';
-
-// Password check for write operations
-function checkPassword($required_password) {
+function readBody() {
     $data = json_decode(file_get_contents('php://input'), true);
-    $provided = $data['password'] ?? $_GET['password'] ?? '';
-    if ($provided !== $required_password) {
+    return is_array($data) ? $data : [];
+}
+
+function requirePassword(array $data, string $expected) {
+    $provided = (string)($data['password'] ?? '');
+    if ($expected === '' || !hash_equals($expected, $provided)) {
         http_response_code(401);
         echo json_encode(['error' => 'Invalid password']);
         exit;
     }
-    return $data;
 }
+
+function franchiseOf(array $data) {
+    $f = $data['franchise'] ?? '';
+    if (!in_array($f, FRANCHISES, true)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Unknown game']);
+        exit;
+    }
+    return $f;
+}
+
+function intOrNull($v) {
+    return ($v === null || $v === '') ? null : (int)$v;
+}
+
+$action = $_GET['action'] ?? '';
 
 switch ($action) {
     case 'load':
-        // Load all cards and games
-        $cards = $pdo->query("SELECT * FROM cards ORDER BY expansion, type, name")->fetchAll(PDO::FETCH_ASSOC);
-        $games = $pdo->query("SELECT * FROM games ORDER BY expansion, name")->fetchAll(PDO::FETCH_ASSOC);
+        $cards = $pdo->query("SELECT id, franchise, expansion, type, name, comment, ranking FROM cards ORDER BY franchise, expansion, type, name")->fetchAll(PDO::FETCH_ASSOC);
+        $cards = array_map(function ($c) {
+            $c['id'] = (int)$c['id'];
+            $c['ranking'] = intOrNull($c['ranking']);
+            return $c;
+        }, $cards);
 
-        // Convert snake_case to camelCase for JavaScript
-        $games = array_map(function($game) {
+        $games = $pdo->query("SELECT * FROM games ORDER BY franchise, expansion, name")->fetchAll(PDO::FETCH_ASSOC);
+        $games = array_map(function ($g) {
             return [
-                'id' => $game['id'],
-                'expansion' => $game['expansion'],
-                'name' => $game['name'],
-                'comment' => $game['comment'],
-                'ranking' => $game['ranking'],
-                'victoryPile' => (int)$game['victory_pile'],
-                'bystanders' => (int)$game['bystanders'],
-                'bystanderPenalty' => (int)$game['bystander_penalty'],
-                'twists' => (int)$game['twists'],
-                'twistPenalty' => (int)$game['twist_penalty'],
-                'escaped' => (int)$game['villains_escaped'],
-                'escapePenalty' => (int)$game['escape_penalty'],
-                'sum' => (int)$game['total_score'],
-                'heroes' => $game['heroes'],
-                'result' => $game['result']
+                'id' => (int)$g['id'],
+                'franchise' => $g['franchise'],
+                'expansion' => $g['expansion'],
+                'name' => $g['name'],
+                'comment' => $g['comment'],
+                'ranking' => intOrNull($g['ranking']),
+                'victoryPile' => (int)$g['victory_pile'],
+                'bystanders' => (int)$g['bystanders'],
+                'bystanderPenalty' => (int)$g['bystander_penalty'],
+                'twists' => (int)$g['twists'],
+                'twistPenalty' => (int)$g['twist_penalty'],
+                'escaped' => (int)$g['villains_escaped'],
+                'escapePenalty' => (int)$g['escape_penalty'],
+                'sum' => (int)$g['total_score'],
+                'heroes' => $g['heroes'],
+                'result' => $g['result'],
             ];
         }, $games);
 
         echo json_encode(['cards' => $cards, 'games' => $games]);
         break;
 
-    case 'saveCard':
-        $data = checkPassword($edit_password);
+    case 'checkPassword':
+        requirePassword(readBody(), $config['edit_password']);
+        echo json_encode(['success' => true]);
+        break;
 
-        if (isset($data['id']) && $data['id']) {
-            // Update existing card
-            $stmt = $pdo->prepare("UPDATE cards SET expansion=?, type=?, name=?, comment=?, ranking=? WHERE id=?");
-            $stmt->execute([$data['expansion'], $data['type'], $data['name'], $data['comment'] ?? '', $data['ranking'], $data['id']]);
-            echo json_encode(['success' => true, 'id' => $data['id']]);
+    case 'saveCard':
+        $data = readBody();
+        requirePassword($data, $config['edit_password']);
+        $values = [
+            franchiseOf($data), $data['expansion'] ?? '', $data['type'] ?? '',
+            $data['name'] ?? '', $data['comment'] ?? '', intOrNull($data['ranking'] ?? null),
+        ];
+        if (!empty($data['id'])) {
+            $stmt = $pdo->prepare("UPDATE cards SET franchise=?, expansion=?, type=?, name=?, comment=?, ranking=? WHERE id=?");
+            $stmt->execute(array_merge($values, [(int)$data['id']]));
+            echo json_encode(['success' => true, 'id' => (int)$data['id']]);
         } else {
-            // Insert new card
-            $stmt = $pdo->prepare("INSERT INTO cards (expansion, type, name, comment, ranking) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$data['expansion'], $data['type'], $data['name'], $data['comment'] ?? '', $data['ranking']]);
-            echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
+            $stmt = $pdo->prepare("INSERT INTO cards (franchise, expansion, type, name, comment, ranking) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute($values);
+            echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId()]);
         }
         break;
 
     case 'saveGame':
-        $data = checkPassword($edit_password);
-
-        if (isset($data['id']) && $data['id']) {
-            // Update existing game
-            $stmt = $pdo->prepare("UPDATE games SET expansion=?, name=?, comment=?, ranking=?, victory_pile=?, bystanders=?, bystander_penalty=?, twists=?, twist_penalty=?, villains_escaped=?, escape_penalty=?, total_score=?, heroes=?, result=? WHERE id=?");
-            $stmt->execute([
-                $data['expansion'], $data['name'], $data['comment'] ?? '', $data['ranking'],
-                $data['victoryPile'], $data['bystanders'], $data['bystanderPenalty'],
-                $data['twists'], $data['twistPenalty'], $data['escaped'], $data['escapePenalty'],
-                $data['sum'], $data['heroes'] ?? '', $data['result'] ?? '', $data['id']
-            ]);
-            echo json_encode(['success' => true, 'id' => $data['id']]);
+        $data = readBody();
+        requirePassword($data, $config['edit_password']);
+        $values = [
+            franchiseOf($data), $data['expansion'] ?? '', $data['name'] ?? '', $data['comment'] ?? '',
+            intOrNull($data['ranking'] ?? null),
+            (int)($data['victoryPile'] ?? 0), (int)($data['bystanders'] ?? 0), (int)($data['bystanderPenalty'] ?? 0),
+            (int)($data['twists'] ?? 0), (int)($data['twistPenalty'] ?? 0),
+            (int)($data['escaped'] ?? 0), (int)($data['escapePenalty'] ?? 0),
+            (int)($data['sum'] ?? 0), $data['heroes'] ?? '', $data['result'] ?? '',
+        ];
+        if (!empty($data['id'])) {
+            $stmt = $pdo->prepare("UPDATE games SET franchise=?, expansion=?, name=?, comment=?, ranking=?, victory_pile=?, bystanders=?, bystander_penalty=?, twists=?, twist_penalty=?, villains_escaped=?, escape_penalty=?, total_score=?, heroes=?, result=? WHERE id=?");
+            $stmt->execute(array_merge($values, [(int)$data['id']]));
+            echo json_encode(['success' => true, 'id' => (int)$data['id']]);
         } else {
-            // Insert new game
-            $stmt = $pdo->prepare("INSERT INTO games (expansion, name, comment, ranking, victory_pile, bystanders, bystander_penalty, twists, twist_penalty, villains_escaped, escape_penalty, total_score, heroes, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([
-                $data['expansion'], $data['name'], $data['comment'] ?? '', $data['ranking'],
-                $data['victoryPile'], $data['bystanders'], $data['bystanderPenalty'],
-                $data['twists'], $data['twistPenalty'], $data['escaped'], $data['escapePenalty'],
-                $data['sum'], $data['heroes'] ?? '', $data['result'] ?? ''
-            ]);
-            echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
+            $stmt = $pdo->prepare("INSERT INTO games (franchise, expansion, name, comment, ranking, victory_pile, bystanders, bystander_penalty, twists, twist_penalty, villains_escaped, escape_penalty, total_score, heroes, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute($values);
+            echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId()]);
         }
         break;
 
     case 'deleteCard':
-        $data = checkPassword($edit_password);
-        $stmt = $pdo->prepare("DELETE FROM cards WHERE id = ?");
-        $stmt->execute([$data['id']]);
-        echo json_encode(['success' => true]);
-        break;
-
     case 'deleteGame':
-        $data = checkPassword($edit_password);
-        $stmt = $pdo->prepare("DELETE FROM games WHERE id = ?");
-        $stmt->execute([$data['id']]);
+        $data = readBody();
+        requirePassword($data, $config['edit_password']);
+        $table = $action === 'deleteCard' ? 'cards' : 'games';
+        $stmt = $pdo->prepare("DELETE FROM `$table` WHERE id = ?");
+        $stmt->execute([(int)($data['id'] ?? 0)]);
         echo json_encode(['success' => true]);
-        break;
-
-    case 'importInitialData':
-        // Import initial dataset (run once)
-        $data = checkPassword($edit_password);
-
-        // Clear existing data
-        $pdo->exec("TRUNCATE TABLE cards");
-        $pdo->exec("TRUNCATE TABLE games");
-
-        // Import cards
-        $stmt = $pdo->prepare("INSERT INTO cards (expansion, type, name, comment, ranking) VALUES (?, ?, ?, ?, ?)");
-        foreach ($data['cards'] as $card) {
-            $stmt->execute([$card['expansion'], $card['type'], $card['name'], $card['comment'] ?? '', $card['ranking'] ?? null]);
-        }
-
-        // Import games
-        $stmt = $pdo->prepare("INSERT INTO games (expansion, name, comment, ranking, victory_pile, bystanders, bystander_penalty, twists, twist_penalty, villains_escaped, escape_penalty, total_score, heroes, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        foreach ($data['games'] as $game) {
-            $stmt->execute([
-                $game['expansion'], $game['name'], $game['comment'] ?? '', $game['ranking'] ?? null,
-                $game['victoryPile'] ?? 0, $game['bystanders'] ?? 0, $game['bystanderPenalty'] ?? 0,
-                $game['twists'] ?? 0, $game['twistPenalty'] ?? 0, $game['escaped'] ?? 0, $game['escapePenalty'] ?? 0,
-                $game['sum'] ?? 0, $game['heroes'] ?? '', $game['result'] ?? ''
-            ]);
-        }
-
-        echo json_encode(['success' => true, 'cardsImported' => count($data['cards']), 'gamesImported' => count($data['games'])]);
         break;
 
     default:
         http_response_code(400);
         echo json_encode(['error' => 'Invalid action']);
 }
-?>
