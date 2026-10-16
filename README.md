@@ -9,4 +9,4 @@ Score board for all Legendary games (Marvel, Alien, James Bond, Predator, Matrix
 - Deploy: GitHub Actions (`.github/workflows/deploy.yml`) builds `config.php` from repo secrets and uploads via SFTP.
 
 Required secrets: `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_FRONTEND_DIR` (= `webroots/www/legendary/`),
-`DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, `EDIT_PASSWORD`.
+`DB_PASS`, `EDIT_PASSWORD`. Database host, name and user are set in the workflow.
