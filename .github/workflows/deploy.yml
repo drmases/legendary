@@ -15,9 +15,9 @@ jobs:
       - name: Build dist (with config.php from secrets)
         # Host, database and user are not secret; the passwords are.
         env:
-          DB_HOST: globbin.se.mysql
-          DB_NAME: globbin_se
-          DB_USER: globbin_se
+          DB_HOST: localhost
+          DB_NAME: c2s4tpyp0_globbin_se
+          DB_USER: c2s4tpyp0_globbin_se
           DB_PASS: ${{ secrets.DB_PASS }}
           EDIT_PASSWORD: ${{ secrets.EDIT_PASSWORD }}
         run: |
