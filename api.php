@@ -1,5 +1,6 @@
 <?php
 // Legendary score board API (Marvel, Alien, James Bond, Predator, Matrix, Firefly)
+// The games.result column holds the free-text result note; games.outcome is win/loss/draw.
 // Secrets live in config.php, which is NOT in git. See config.example.php.
 
 header('Content-Type: application/json; charset=utf-8');
@@ -55,8 +56,11 @@ function initTables(PDO $pdo) {
         twist_penalty INT DEFAULT 0,
         villains_escaped INT DEFAULT 0,
         escape_penalty INT DEFAULT 0,
-        total_score INT DEFAULT 0,
+        danger_level INT DEFAULT 0,
+        danger_penalty INT DEFAULT 0,
+        total_score INT NULL,
         heroes TEXT,
+        outcome VARCHAR(8) NULL,
         result VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -83,7 +87,24 @@ function repairMojibake($v) {
 
 // Each migration runs once. The schema version lives in legendary_meta,
 // so a normal request costs one SELECT instead of a schema inspection.
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
+
+const OUTCOMES = ['win', 'loss', 'draw'];
+
+// Old results were free text: "Vann", "Förlorade", "Vann med två kort kvar".
+// Returns [outcome, note]: the leading win/loss word becomes the outcome, the rest stays as a note.
+function splitResult($text) {
+    $text = trim((string)$text);
+    $words = ['win' => 'vann|vinst|vunnit|won|win', 'loss' => 'förlorade|förlorat|förlust|lost|loss', 'draw' => 'oavgjort|draw'];
+    foreach ($words as $outcome => $re) {
+        if (preg_match("/^($re)(?![\\p{L}])[\\s.,:;!–-]*/iu", $text, $m)) {
+            $note = trim(mb_substr($text, mb_strlen($m[0])));
+            if ($note !== '') $note = mb_strtoupper(mb_substr($note, 0, 1)) . mb_substr($note, 1);
+            return [$outcome, $note];
+        }
+    }
+    return [null, $text];
+}
 
 function migrate(PDO $pdo) {
     $row = $pdo->query("SELECT v FROM legendary_meta WHERE k = 'schema'")->fetch();
@@ -120,6 +141,25 @@ function migrate(PDO $pdo) {
                 }
             }
         }
+    }
+    if ($version < 4) {
+        if (!hasColumn($pdo, 'games', 'outcome')) {
+            $pdo->exec("ALTER TABLE games ADD COLUMN outcome VARCHAR(8) NULL AFTER heroes");
+            $rows = $pdo->query("SELECT id, result FROM games")->fetchAll(PDO::FETCH_ASSOC);
+            $stmt = $pdo->prepare("UPDATE games SET outcome = ?, result = ? WHERE id = ?");
+            foreach ($rows as $r) {
+                [$outcome, $note] = splitResult($r['result']);
+                $stmt->execute([$outcome, $note, (int)$r['id']]);
+            }
+        }
+        if (!hasColumn($pdo, 'games', 'danger_level')) {
+            $pdo->exec("ALTER TABLE games ADD COLUMN danger_level INT DEFAULT 0 AFTER escape_penalty,
+                        ADD COLUMN danger_penalty INT DEFAULT 0 AFTER danger_level");
+        }
+        // NULL = no score recorded. Rows where everything is 0 were never scored.
+        $pdo->exec("ALTER TABLE games MODIFY total_score INT NULL DEFAULT NULL");
+        $pdo->exec("UPDATE games SET total_score = NULL WHERE total_score = 0 AND victory_pile = 0
+                    AND bystanders = 0 AND twists = 0 AND villains_escaped = 0");
     }
     $pdo->prepare("REPLACE INTO legendary_meta (k, v) VALUES ('schema', ?)")->execute([$target]);
 }
@@ -204,9 +244,12 @@ switch ($action) {
                 'twistPenalty' => (int)$g['twist_penalty'],
                 'escaped' => (int)$g['villains_escaped'],
                 'escapePenalty' => (int)$g['escape_penalty'],
-                'sum' => (int)$g['total_score'],
+                'danger' => (int)$g['danger_level'],
+                'dangerPenalty' => (int)$g['danger_penalty'],
+                'sum' => intOrNull($g['total_score']),
                 'heroes' => $g['heroes'],
-                'result' => $g['result'],
+                'outcome' => $g['outcome'],
+                'resultNote' => $g['result'],
             ];
         }, $games);
 
@@ -245,14 +288,17 @@ switch ($action) {
             (int)($data['victoryPile'] ?? 0), (int)($data['bystanders'] ?? 0), (int)($data['bystanderPenalty'] ?? 0),
             (int)($data['twists'] ?? 0), (int)($data['twistPenalty'] ?? 0),
             (int)($data['escaped'] ?? 0), (int)($data['escapePenalty'] ?? 0),
-            (int)($data['sum'] ?? 0), text($data, 'heroes'), text($data, 'result'),
+            (int)($data['danger'] ?? 0), (int)($data['dangerPenalty'] ?? 0),
+            intOrNull($data['sum'] ?? null), text($data, 'heroes'),
+            in_array($data['outcome'] ?? null, OUTCOMES, true) ? $data['outcome'] : null,
+            text($data, 'resultNote'),
         ];
         if (!empty($data['id'])) {
-            $stmt = $pdo->prepare("UPDATE games SET franchise=?, expansion=?, name=?, played_on=?, comment=?, ranking=?, victory_pile=?, bystanders=?, bystander_penalty=?, twists=?, twist_penalty=?, villains_escaped=?, escape_penalty=?, total_score=?, heroes=?, result=? WHERE id=?");
+            $stmt = $pdo->prepare("UPDATE games SET franchise=?, expansion=?, name=?, played_on=?, comment=?, ranking=?, victory_pile=?, bystanders=?, bystander_penalty=?, twists=?, twist_penalty=?, villains_escaped=?, escape_penalty=?, danger_level=?, danger_penalty=?, total_score=?, heroes=?, outcome=?, result=? WHERE id=?");
             $stmt->execute(array_merge($values, [(int)$data['id']]));
             echo json_encode(['success' => true, 'id' => (int)$data['id']]);
         } else {
-            $stmt = $pdo->prepare("INSERT INTO games (franchise, expansion, name, played_on, comment, ranking, victory_pile, bystanders, bystander_penalty, twists, twist_penalty, villains_escaped, escape_penalty, total_score, heroes, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO games (franchise, expansion, name, played_on, comment, ranking, victory_pile, bystanders, bystander_penalty, twists, twist_penalty, villains_escaped, escape_penalty, danger_level, danger_penalty, total_score, heroes, outcome, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute($values);
             echo json_encode(['success' => true, 'id' => (int)$pdo->lastInsertId()]);
         }

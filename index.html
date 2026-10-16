@@ -129,6 +129,7 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .rating b { font-family: var(--display); font-size: 1.1rem; }
 .res-win { color: var(--win); font-weight: 600; }
 .res-loss { color: var(--loss); font-weight: 600; }
+.res-draw { color: var(--muted); font-weight: 600; }
 .muted { color: var(--muted); font-weight: 400; }
 .empty { text-align: center; color: var(--muted); padding: 36px 12px; }
 .row-actions { display: flex; gap: 4px; }
@@ -245,18 +246,14 @@ footer { color: var(--muted); font-size: .8rem; margin-top: 36px; }
                     <label><span id="gNameLabel">Scheme</span><input id="gName" required></label>
                     <label>Played<input id="gPlayed" type="date"></label>
                     <label>Rating (1–10)<input id="gRating" type="number" min="1" max="10"></label>
-                    <label>Result<select id="gResult">
-                        <option value="">–</option><option value="Vann">Win</option><option value="Förlorade">Loss</option>
+                    <label>Outcome<select id="gOutcome">
+                        <option value="">–</option><option value="win">Win</option><option value="loss">Loss</option><option value="draw">Draw</option>
                     </select></label>
+                    <label class="wide">Result note<input id="gResultNote" placeholder="e.g. Won with two cards left in the villain deck"></label>
                 </div>
-                <div class="grid" id="detailedScore" style="margin-top:12px">
-                    <label>Victory pile<input id="gVictory" type="number" min="0" value="0"></label>
-                    <label>Bystanders carried away<input id="gBystanders" type="number" min="0" value="0"></label>
-                    <label>Scheme twists<input id="gTwists" type="number" min="0" value="0"></label>
-                    <label>Villains escaped<input id="gEscaped" type="number" min="0" value="0"></label>
-                </div>
+                <div class="grid" id="detailedScore" style="margin-top:12px"></div>
                 <div class="grid" id="simpleScore" style="margin-top:12px">
-                    <label>Score (optional)<input id="gScore" type="number"></label>
+                    <label><span id="gScoreLabel">Score</span><input id="gScore" type="number"></label>
                 </div>
                 <p class="score-preview" id="scorePreview"></p>
                 <div class="grid" style="margin-top:12px">
@@ -304,24 +301,42 @@ footer { color: var(--muted); font-size: .8rem; margin-top: 36px; }
 <script>
 /* ============================================================
    Game configuration. Change labels, card types or scoring here.
-   scoring: 'detailed' = victory pile minus penalties (Marvel rules)
-            'simple'   = win/loss plus an optional score number
+   scoring: 'detailed' = victory pile minus penalties (each penalty: count × per)
+            'simple'   = one optional score number (scoreLabel explains the scale)
+            'none'     = the game has no score, only an outcome
+   The first three card types get "Top rated" charts; the first two get a dashboard tile.
    ============================================================ */
-const FRANCHISES = {
-    marvel:   { short: 'Marvel',   full: 'Marvel Legendary',            color: '#e62429', scoring: 'detailed',
-                types: ['Hero', 'Mastermind', 'Scheme', 'Villain'], scenario: 'Scheme',  used: 'Heroes & mastermind used' },
-    alien:    { short: 'Alien',    full: 'Legendary Encounters: Alien',  color: '#45c4c9', scoring: 'simple',
-                types: ['Hero', 'Mastermind', 'Scheme', 'Villain'], scenario: 'Scenario', used: 'Characters used' },
-    bond:     { short: 'James Bond', full: 'Legendary: James Bond 007', color: '#d4d9e0', scoring: 'detailed',
-                types: ['Hero', 'Mastermind', 'Scheme', 'Villain'], scenario: 'Scheme',  used: 'Heroes & mastermind used' },
-    predator: { short: 'Predator', full: 'Legendary Encounters: Predator', color: '#f2c230', scoring: 'simple',
-                types: ['Hero', 'Mastermind', 'Scheme', 'Villain'], scenario: 'Scenario', used: 'Characters used' },
-    matrix:   { short: 'Matrix',   full: 'Legendary: The Matrix',        color: '#2fd16b', scoring: 'detailed',
-                types: ['Hero', 'Mastermind', 'Scheme', 'Villain'], scenario: 'Scheme',  used: 'Heroes & mastermind used' },
-    firefly:  { short: 'Firefly',  full: 'Legendary: Firefly',           color: '#e08a3a', scoring: 'simple',
-                types: ['Hero', 'Mastermind', 'Scheme', 'Villain'], scenario: 'Story',   used: 'Crew used' },
+const P = {   // penalty fields; key/pen match the game properties (bystanders/bystanderPenalty, …)
+    bystanders: { key: 'bystanders', pen: 'bystanderPenalty' },
+    twists:     { key: 'twists',     pen: 'twistPenalty',  label: 'Scheme twists',    short: 'Twists',  per: -3 },
+    escaped:    { key: 'escaped',    pen: 'escapePenalty', label: 'Villains escaped', short: 'Escaped', per: -1 },
+    danger:     { key: 'danger',     pen: 'dangerPenalty' },
 };
-const PENALTY = { bystander: -4, twist: -3, escaped: -1 };
+const FRANCHISES = {
+    marvel:   { short: 'Marvel', full: 'Legendary: A Marvel Deck Building Game', color: '#e62429',
+                types: ['Hero', 'Mastermind', 'Scheme', 'Villain'], scenario: 'Scheme', used: 'Heroes & mastermind used',
+                scoring: 'detailed', penalties: [
+                    { ...P.bystanders, label: 'Bystanders carried away', short: 'Bystanders', per: -4 }, P.twists, P.escaped] },
+    alien:    { short: 'Alien', full: 'Legendary Encounters: An Alien Deck Building Game', color: '#45c4c9',
+                types: ['Role', 'Character', 'Objective', 'Location'], scenario: 'Objectives', used: 'Roles & characters used',
+                scoring: 'simple', scoreLabel: 'Score (1 per surviving player)' },
+    bond:     { short: 'James Bond', full: 'Legendary: A James Bond Deck Building Game', color: '#d4d9e0',
+                types: ['Hero', 'Mastermind', 'Scheme', 'Villain group', 'Mission group', 'Henchmen'], scenario: 'Scheme',
+                used: 'Heroes & mastermind used',
+                scoring: 'detailed', penalties: [   // solo scoring from the Bond rulebook
+                    { ...P.bystanders, label: 'Gadgets carried away', short: 'Gadgets', per: -4 }, P.twists, P.escaped,
+                    { ...P.danger, label: 'Final danger level', short: 'Danger', per: -1 }] },
+    predator: { short: 'Predator', full: 'Legendary Encounters: A Predator Deck Building Game', color: '#f2c230',
+                types: ['Role', 'Character', 'Objective', 'Location'], scenario: 'Objectives', used: 'Roles & characters used',
+                scoring: 'simple', scoreLabel: 'Score (major win: 5 + survivors, minor win: survivors)' },
+    matrix:   { short: 'Matrix', full: 'Legendary Encounters: The Matrix', color: '#2fd16b',
+                types: ['Avatar', 'Hero group', 'Act'], scenario: 'Acts', used: 'Avatars & hero groups used',
+                scoring: 'none' },
+    firefly:  { short: 'Firefly', full: 'Legendary Encounters: A Firefly Deck Building Game', color: '#e08a3a',
+                types: ['Avatar', 'Supporting character', 'Objective'], scenario: 'Episodes', used: 'Crew used',
+                scoring: 'simple', scoreLabel: 'Score (0–6: A = 1, B = 2, win = 3)' },
+};
+const OUTCOMES = { win: 'Win', loss: 'Loss', draw: 'Draw' };
 
 const MARVEL_EXPANSION_COLORS = {
     "Annihilation": "#8B5CF6", "Ant-Man": "#EF4444", "Black Panther": "#6366F1", "Black Widow": "#EC4899",
@@ -351,13 +366,6 @@ function expansionColor(exp) {
     for (const ch of String(exp)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
     return PALETTE[h % PALETTE.length];
 }
-function isWin(result) {
-    if (!result) return null;
-    const r = result.trim().toLowerCase();
-    if (/^(vann|vinst|won|win)/.test(r)) return true;
-    if (/^(förlor|forlor|lost|loss)/.test(r)) return false;
-    return null;
-}
 function ratingHtml(n) {
     if (!n) return '<span class="muted">–</span>';
     let pips = '';
@@ -370,16 +378,16 @@ function today() {
 }
 // Newest first: by play date, then by id (older rows have no date).
 function byRecent(a, b) { return (b.playedOn || '').localeCompare(a.playedOn || '') || b.id - a.id; }
-function plural(t) { return t.endsWith('s') ? t : /o$/i.test(t) ? t + 'es' : t + 's'; }
+function plural(t) { return /(s|men)$/.test(t) ? t : /o$/i.test(t) ? t + 'es' : t + 's'; }
 function toast(msg) {
     const t = $('toast'); t.textContent = msg; t.classList.add('show');
     clearTimeout(toast.timer); toast.timer = setTimeout(() => t.classList.remove('show'), 2600);
 }
 function summarize(list) {
-    const wins = list.filter(g => isWin(g.result) === true).length;
-    const losses = list.filter(g => isWin(g.result) === false).length;
-    const decided = wins + losses;
-    const scored = list.filter(g => g.sum !== 0);
+    const wins = list.filter(g => g.outcome === 'win').length;
+    const losses = list.filter(g => g.outcome === 'loss').length;
+    const decided = wins + losses;   // draws don't count towards the win rate
+    const scored = list.filter(g => g.sum != null);
     return {
         played: list.length, wins, losses,
         rate: decided ? Math.round(wins / decided * 100) + '%' : '–',
@@ -458,6 +466,11 @@ function enterFranchise() {
     $('gHeroesLabel').textContent = f.used;
     $('detailedScore').hidden = f.scoring !== 'detailed';
     $('simpleScore').hidden = f.scoring !== 'simple';
+    $('gScoreLabel').textContent = f.scoreLabel || 'Score';
+    // Blank fields mean "score not recorded"; 0 is a real value.
+    $('detailedScore').innerHTML = f.scoring !== 'detailed' ? '' :
+        `<label>Victory pile<input id="gVictory" type="number" min="0" placeholder="–"></label>` +
+        f.penalties.map(p => `<label>${esc(p.label)} (${p.per})<input data-pen="${p.key}" type="number" min="0" placeholder="–"></label>`).join('');
     resetCardForm(); resetGameForm();
     ['fExpansion', 'fType', 'fRating'].forEach(id => $(id).value = '');
     $('fSearch').value = '';
@@ -475,7 +488,7 @@ function filtered() {
         hit(c.name, c.comment, c.expansion) && (!min || (c.ranking || 0) >= min));
     const fg = myGames().filter(g =>
         (!exp || g.expansion === exp) &&
-        hit(g.name, g.heroes, g.expansion, g.comment) && (!min || (g.ranking || 0) >= min));
+        hit(g.name, g.heroes, g.expansion, g.comment, g.resultNote) && (!min || (g.ranking || 0) >= min));
     return { fc, fg };
 }
 
@@ -520,38 +533,35 @@ function sortHead(label, col, which) {
 }
 
 function renderGames(list) {
-    const f = cfg(), detailed = f.scoring === 'detailed';
+    const f = cfg(), detailed = f.scoring === 'detailed', pens = detailed ? f.penalties : [];
     $('gamesHead').innerHTML = `<tr>
         ${sortHead('Expansion', 'expansion', 'games')}
         ${sortHead(f.scenario, 'name', 'games')}
         ${sortHead('Played', 'playedOn', 'games')}
-        ${detailed ? sortHead('Victory pile', 'victoryPile', 'games') + '<th>Bystanders</th><th>Twists</th><th>Escaped</th>' : ''}
-        ${sortHead('Score', 'sum', 'games')}
+        ${detailed ? sortHead('Victory pile', 'victoryPile', 'games') + pens.map(p => `<th>${esc(p.short)}</th>`).join('') : ''}
+        ${f.scoring !== 'none' ? sortHead('Score', 'sum', 'games') : ''}
         <th>${esc(f.used)}</th>
         ${sortHead('Rating', 'ranking', 'games')}
         <th>Result</th><th>Comment</th><th></th></tr>`;
-    const cols = detailed ? 12 : 9;
+    const cols = 8 + (f.scoring !== 'none') + (detailed ? 1 + pens.length : 0);
     const rows = sortState.games.col ? sorted(list, 'games') : [...list].sort(byRecent);
     if (!rows.length) {
         $('gamesBody').innerHTML = `<tr><td colspan="${cols}" class="empty">${myGames().length ? 'No results match the filters.' : 'No games logged yet. Use “+ Add” to log the first one.'}</td></tr>`;
         return;
     }
     $('gamesBody').innerHTML = rows.map(g => {
-        const w = isWin(g.result);
-        const resultText = w === true ? 'Win' : w === false ? 'Loss' : '–';
-        const extra = g.result && !['vann', 'förlorade'].includes(g.result.toLowerCase()) ? `<div class="muted">${esc(g.result)}</div>` : '';
+        const noScore = g.sum == null;
+        const note = g.resultNote ? `<div class="muted">${esc(g.resultNote)}</div>` : '';
         return `<tr>
             <td><span class="tag" style="background:${expansionColor(g.expansion)}">${esc(g.expansion)}</span></td>
             <td><strong>${esc(g.name)}</strong></td>
             <td class="num">${g.playedOn ? esc(g.playedOn) : '<span class="muted">–</span>'}</td>
-            ${detailed ? `<td class="num">${g.victoryPile}</td>
-                <td class="num">${g.bystanders} <span class="pen">(${g.bystanderPenalty})</span></td>
-                <td class="num">${g.twists} <span class="pen">(${g.twistPenalty})</span></td>
-                <td class="num">${g.escaped} <span class="pen">(${g.escapePenalty})</span></td>` : ''}
-            <td class="num"><strong>${g.sum || (detailed ? 0 : '–')}</strong></td>
+            ${detailed ? `<td class="num">${noScore ? '<span class="muted">–</span>' : g.victoryPile}</td>` +
+                pens.map(p => `<td class="num">${noScore ? '<span class="muted">–</span>' : `${g[p.key]} <span class="pen">(${g[p.pen]})</span>`}</td>`).join('') : ''}
+            ${f.scoring !== 'none' ? `<td class="num"><strong>${noScore ? '<span class="muted">–</span>' : g.sum}</strong></td>` : ''}
             <td>${esc(g.heroes) || '<span class="muted">–</span>'}</td>
             <td>${ratingHtml(g.ranking)}</td>
-            <td class="${w === true ? 'res-win' : w === false ? 'res-loss' : ''}">${resultText}${extra}</td>
+            <td class="res-${g.outcome || 'none'}">${OUTCOMES[g.outcome] || '–'}${note}</td>
             <td>${esc(g.comment) || '<span class="muted">–</span>'}</td>
             <td><div class="row-actions">
                 <button class="icon-btn" data-edit-game="${g.id}" title="Edit">✎</button>
@@ -600,12 +610,12 @@ function renderCharts(fc, fg) {
     fc.filter(c => c.ranking).forEach(c => { (byExp[c.expansion] ??= []).push(c.ranking); });
     const expAvg = Object.entries(byExp).map(([name, r]) => ({ name, value: +(r.reduce((a, b) => a + b, 0) / r.length).toFixed(1) }))
         .sort((a, b) => b.value - a.value).slice(0, 8);
-    const scored = fg.filter(g => g.sum).sort((a, b) => b.sum - a.sum).slice(0, 8).map(g => ({ name: g.name, value: g.sum }));
+    const scored = fg.filter(g => g.sum != null).sort((a, b) => b.sum - a.sum).slice(0, 8).map(g => ({ name: g.name, value: g.sum }));
     const maxScore = Math.max(1, ...scored.map(s => s.value));
     $('charts').innerHTML =
-        f.types.filter(t => t !== 'Villain').map(t => barChart(`Top rated ${plural(t).toLowerCase()}`, top(t), 10)).join('') +
+        f.types.slice(0, 3).map(t => barChart(`Top rated ${plural(t).toLowerCase()}`, top(t), 10)).join('') +
         barChart('Expansions by average rating', expAvg, 10) +
-        barChart('Highest scores', scored, maxScore);
+        (f.scoring !== 'none' ? barChart('Highest scores', scored, maxScore) : '');
 }
 
 /* ---------- API ---------- */
@@ -646,18 +656,30 @@ async function load() {
 }
 
 /* ---------- Forms ---------- */
+// sum is null when no score was recorded, so a real 0 stays distinguishable.
 function computeScore() {
-    if (cfg().scoring !== 'detailed') {
+    const f = cfg();
+    const out = { victoryPile: 0, sum: null };
+    Object.values(P).forEach(p => { out[p.key] = 0; out[p.pen] = 0; });
+    if (f.scoring === 'simple') {
         const s = parseInt($('gScore').value);
-        return { victoryPile: 0, bystanders: 0, bystanderPenalty: 0, twists: 0, twistPenalty: 0, escaped: 0, escapePenalty: 0, sum: isNaN(s) ? 0 : s };
+        out.sum = isNaN(s) ? null : s;
+    } else if (f.scoring === 'detailed') {
+        const inputs = [$('gVictory'), ...$('detailedScore').querySelectorAll('[data-pen]')];
+        if (inputs.every(i => i.value === '')) return out;
+        out.victoryPile = parseInt($('gVictory').value) || 0;
+        out.sum = out.victoryPile;
+        f.penalties.forEach(p => {
+            out[p.key] = parseInt($('detailedScore').querySelector(`[data-pen="${p.key}"]`).value) || 0;
+            out[p.pen] = out[p.key] * p.per;
+            out.sum += out[p.pen];
+        });
     }
-    const v = parseInt($('gVictory').value) || 0, b = parseInt($('gBystanders').value) || 0;
-    const t = parseInt($('gTwists').value) || 0, e = parseInt($('gEscaped').value) || 0;
-    const bp = b * PENALTY.bystander, tp = t * PENALTY.twist, ep = e * PENALTY.escaped;
-    return { victoryPile: v, bystanders: b, bystanderPenalty: bp, twists: t, twistPenalty: tp, escaped: e, escapePenalty: ep, sum: v + bp + tp + ep };
+    return out;
 }
 function updatePreview() {
-    $('scorePreview').innerHTML = cfg().scoring === 'detailed' ? `Total score: <b>${computeScore().sum}</b>` : '';
+    const sum = computeScore().sum;
+    $('scorePreview').innerHTML = cfg().scoring === 'detailed' ? `Total score: <b>${sum ?? '–'}</b>` : '';
 }
 
 function resetGameForm() {
@@ -667,7 +689,6 @@ function resetGameForm() {
     $('gameFormTitle').textContent = 'Add game result';
     $('gameSubmit').textContent = 'Add result';
     $('gameCancel').hidden = true;
-    [...$('gResult').options].forEach(o => { if (o.dataset.custom) o.remove(); });
     $('gPlayed').value = today();
     updatePreview();
 }
@@ -691,12 +712,13 @@ function editGame(id) {
     editingGameId = g.id;
     $('gExpansion').value = g.expansion; $('gName').value = g.name; $('gPlayed').value = g.playedOn || '';
     $('gRating').value = g.ranking ?? ''; $('gHeroes').value = g.heroes || ''; $('gComment').value = g.comment || '';
-    $('gVictory').value = g.victoryPile; $('gBystanders').value = g.bystanders;
-    $('gTwists').value = g.twists; $('gEscaped').value = g.escaped; $('gScore').value = g.sum || '';
-    if (g.result && ![...$('gResult').options].some(o => o.value === g.result)) {
-        const o = new Option(g.result, g.result); o.dataset.custom = '1'; $('gResult').add(o);
+    $('gScore').value = g.sum ?? '';
+    if (cfg().scoring === 'detailed' && g.sum != null) {
+        $('gVictory').value = g.victoryPile;
+        $('detailedScore').querySelectorAll('[data-pen]').forEach(i => i.value = g[i.dataset.pen]);
     }
-    $('gResult').value = g.result || '';
+    $('gOutcome').value = g.outcome || '';
+    $('gResultNote').value = g.resultNote || '';
     $('gameForm').classList.add('editing');
     $('gameFormTitle').textContent = `Edit game result: ${g.name}`;
     $('gameSubmit').textContent = 'Save changes';
@@ -727,7 +749,8 @@ $('gameForm').addEventListener('submit', async e => {
         expansion: $('gExpansion').value.trim(), name: $('gName').value.trim(),
         playedOn: $('gPlayed').value || null,
         comment: $('gComment').value.trim(), ranking: parseInt($('gRating').value) || null,
-        heroes: $('gHeroes').value.trim(), result: $('gResult').value,
+        heroes: $('gHeroes').value.trim(),
+        outcome: $('gOutcome').value || null, resultNote: $('gResultNote').value.trim(),
         ...computeScore(),
     };
     if (editingGameId) game.id = editingGameId;
@@ -794,7 +817,7 @@ document.addEventListener('click', e => {
 $('homeBtn').addEventListener('click', () => go(null));
 ['fExpansion', 'fType', 'fRating'].forEach(id => $(id).addEventListener('change', renderAll));
 $('fSearch').addEventListener('input', renderAll);
-['gVictory', 'gBystanders', 'gTwists', 'gEscaped'].forEach(id => $(id).addEventListener('input', updatePreview));
+$('detailedScore').addEventListener('input', updatePreview);
 $('gameCancel').addEventListener('click', resetGameForm);
 $('cardCancel').addEventListener('click', resetCardForm);
 $('exportBtn').addEventListener('click', () => download(`legendary-${current}.json`, { cards: myCards(), games: myGames() }));
